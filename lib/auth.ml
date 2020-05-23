@@ -18,6 +18,9 @@ module Protocol = struct
 end
 
 module S (Client : Cohttp_lwt.S.Client) = struct
+  open Cohttp_lwt
+  open Protocol.Token
+
   let authorize_uri = Uri.of_string "https://www.dropbox.com/oauth2/authorize"
 
   let authorize ?(state = "") ?(force_reapprove = false)
@@ -50,7 +53,6 @@ module S (Client : Cohttp_lwt.S.Client) = struct
   let token_uri = Uri.of_string "https://api.dropboxapi.com/oauth2/token"
 
   let token ?redirect_uri code ~id ~secret =
-    let open Protocol.Token in
     let q =
       [ ("code", [code])
       ; ("grant_type", ["authorization_code"])
@@ -62,11 +64,7 @@ module S (Client : Cohttp_lwt.S.Client) = struct
       | Some u -> ("redirect_uri", [Uri.to_string u]) :: q in
     Client.post @@ Uri.with_query token_uri q
     >>= Error.handle
-    >>=? (fun (_, body) ->
-           Cohttp_lwt.Body.to_string body
-           >>= fun body ->
-           let%lwt _ = Logs_lwt.info (fun m -> m "%s" body) in
-           Json.of_string body)
+    >>=? (fun (_, body) -> Body.to_string body >>= Json.of_string)
     >>=? fun {access_token; _} -> Lwt.return_ok @@ Session.make access_token
 
   let revoke_uri =

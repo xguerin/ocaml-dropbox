@@ -12,6 +12,7 @@ type t =
   | Access_denied
   | Endpoint_specific of endpoint
   | Too_many_requests of int
+  | Not_implemented of string
   | Server
   | Serdes of string
   | Unknown
@@ -51,6 +52,7 @@ let pp ppf = function
     let err = Yojson.Safe.to_string @@ endpoint_to_yojson v in
     Format.pp_print_string ppf ("Endpoint error: " ^ err)
   | Too_many_requests _ -> Format.pp_print_string ppf "Too many requests"
+  | Not_implemented v -> Format.pp_print_string ppf ("Not implemented: " ^ v)
   | Server -> Format.pp_print_string ppf "Server-side error"
   | Serdes v -> Format.pp_print_string ppf ("Serialization error: " ^ v)
   | Unknown -> Format.pp_print_string ppf "Unknown error"

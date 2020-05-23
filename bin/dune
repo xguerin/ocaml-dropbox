@@ -1,3 +1,5 @@
 (executables
- (names auth check)
- (libraries cohttp-lwt-unix dropbox logs logs.lwt lwt))
+ (names auth check users)
+ (libraries cohttp-lwt-unix dropbox logs logs.lwt lwt)
+ (preprocess
+  (pps lwt_ppx)))

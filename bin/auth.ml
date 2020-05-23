@@ -35,7 +35,7 @@ let () =
   | Some id, Some secret, Some code, None -> (
     let op = Auth.token ~id ~secret code in
     match Lwt_main.run op with
-    | Ok session -> Logs.app (fun m -> m "%s" session.Dropbox.Session.token)
+    | Ok session -> Logs.app (fun m -> m "%a" Dropbox.Session.pp session)
     | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err))
   | None, None, None, Some token -> (
     let session = Dropbox.Session.make token in
