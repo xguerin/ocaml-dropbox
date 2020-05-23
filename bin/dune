@@ -1,0 +1,3 @@
+(executables
+ (names auth)
+ (libraries cohttp-lwt-unix dropbox logs logs.lwt lwt))
