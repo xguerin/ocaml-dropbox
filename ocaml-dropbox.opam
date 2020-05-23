@@ -8,6 +8,7 @@ license: "ISC"
 homepage: "https://git.sr.ht/~xguerin/ocaml-dropbox"
 bug-reports: "https://todo.sr.ht/~xguerin/ocaml-dropbox"
 depends: [
+  "base64" {>= "3.4.0"}
   "dune" {> "2.0"}
   "lwt" {>= "5.0.0"}
   "ppx_deriving_yojson" {build & >= "3.5.2"}
