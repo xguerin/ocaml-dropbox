@@ -1,7 +1,7 @@
 open Dropbox
+open Dropbox_lwt_unix
 
 let () =
-  let module Auth = Auth.S (Cohttp_lwt_unix.Client) in
   (*
    * Declare log reporter and level.
    *)

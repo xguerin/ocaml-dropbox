@@ -8,14 +8,9 @@ license: "ISC"
 homepage: "https://git.sr.ht/~xguerin/ocaml-dropbox"
 bug-reports: "https://todo.sr.ht/~xguerin/ocaml-dropbox"
 depends: [
-  "ISO8601" {>= "0.2.6"}
-  "base64" {>= "3.4.0"}
-  "cohttp-lwt" {>= "2.5.1"}
+  "cohttp-lwt-unix" {>= "2.5.1"}
   "dune" {build & > "2.0"}
-  "lwt" {>= "5.0.0"}
-  "lwt_ppx" {build & >= "2.0.1"}
-  "ppx_deriving_yojson" {build & >= "3.5.2"}
-  "uri" {>= "3.1.0"}
+  "ocaml-dropbox" {>= "1.0.0"}
 ]
 build: [
   ["dune" "subst"] {pinned}

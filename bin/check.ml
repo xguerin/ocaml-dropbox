@@ -1,4 +1,4 @@
-module Check = Dropbox.Check.S (Cohttp_lwt_unix.Client)
+open Dropbox_lwt_unix
 
 let () =
   (*

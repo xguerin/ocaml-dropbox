@@ -7,8 +7,8 @@
 (homepage https://git.sr.ht/~xguerin/ocaml-dropbox)
 (source (uri git+https://git.sr.ht/~xguerin/ocaml-dropbox))
 (license ISC)
-(authors "Xavier R. Gu\195\169rin")
-(maintainers "Xavier R. Gu\195\169rin <srht@applepine.org>")
+(authors "Xavier R. Guerin")
+(maintainers "Xavier R. Guerin <srht@applepine.org>")
 (bug_reports "https://todo.sr.ht/~xguerin/ocaml-dropbox")
 
 (package
@@ -17,8 +17,19 @@
  (depends
   (ISO8601 (>= 0.2.6))
   (base64 (>= 3.4.0))
-  (dune (> 2.0))
+  (cohttp-lwt (>= 2.5.1))
+  (dune (and :build (> 2.0)))
   (lwt (>= 5.0.0))
+  (lwt_ppx (and :build (>= 2.0.1)))
   (ppx_deriving_yojson (and :build (>= 3.5.2)))
   (uri (>= 3.1.0))
+))
+
+(package
+ (name ocaml-dropbox-lwt-unix)
+ (synopsis "OCaml Dropbox API")
+ (depends
+  (cohttp-lwt-unix (>= 2.5.1))
+  (dune (and :build (> 2.0)))
+  (ocaml-dropbox (>= 1.0.0))
 ))

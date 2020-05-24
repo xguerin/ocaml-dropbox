@@ -1,6 +1,6 @@
 open Dropbox.Infix
+open Dropbox_lwt_unix
 open Lwt.Infix
-module Users = Dropbox.Users.S (Cohttp_lwt_unix.Client)
 
 let () =
   (*
