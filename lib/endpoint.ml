@@ -7,7 +7,7 @@ module type Data = sig
   module Json : Json.Sig
 end
 
-module type Endpoint = sig
+module type Info = sig
   val uri : Uri.t
 end
 
@@ -17,7 +17,7 @@ module Root = struct
 end
 
 module RemoteProcedureCall = struct
-  module Function (C : S.Client) (I : Data) (O : Data) (E : Endpoint) = struct
+  module Function (C : S.Client) (I : Data) (O : Data) (E : Info) = struct
     let call ?(headers = Header.init ()) ?q v =
       let headers = Header.add headers "Content-Type" "application/json" in
       let uri =
@@ -29,7 +29,7 @@ module RemoteProcedureCall = struct
       >>=? fun (_, body) -> Body.to_string body >>= O.Json.of_string
   end
 
-  module Supplier (C : S.Client) (O : Data) (E : Endpoint) = struct
+  module Supplier (C : S.Client) (O : Data) (E : Info) = struct
     let call ?(headers = Header.init ()) ?q () =
       let uri =
         match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
@@ -38,7 +38,7 @@ module RemoteProcedureCall = struct
       >>=? fun (_, body) -> Body.to_string body >>= O.Json.of_string
   end
 
-  module Void (C : S.Client) (E : Endpoint) = struct
+  module Void (C : S.Client) (E : Info) = struct
     let call ?(headers = Header.init ()) () =
       C.post ~headers E.uri >>= Error.handle
   end

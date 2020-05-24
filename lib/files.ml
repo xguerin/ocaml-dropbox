@@ -1,4 +1,4 @@
-open Api
+open Endpoint
 
 module S (Client : Cohttp_lwt.S.Client) = struct
   (*

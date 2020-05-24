@@ -1,4 +1,4 @@
-open Api
+open Endpoint
 open RemoteProcedureCall
 open Infix
 
