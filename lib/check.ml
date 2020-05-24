@@ -1,5 +1,6 @@
+open Api
+open RemoteProcedureCall
 open Infix
-open Lwt.Infix
 
 module Protocol = struct
   module Query = struct
@@ -19,36 +20,33 @@ module Protocol = struct
   end
 end
 
-module S (Client : Cohttp_lwt.S.Client) = struct
+module S (C : Cohttp_lwt.S.Client) = struct
   open Cohttp
-  open Cohttp_lwt
   open Protocol
 
-  let app_uri = Uri.of_string "https://api.dropboxapi.com/2/check/app"
+  let check Result.Type.{result} =
+    if result = "Hello, world!"
+    then Lwt.return_ok ()
+    else Lwt.return_error Error.Unknown
+
+  module AppEndpoint = struct
+    let uri = Root.api "/check/app"
+  end
+
+  module App = Function (C) (Query) (Result) (AppEndpoint)
 
   let app ~id ~secret () =
     let basic = "Basic " ^ Base64.encode_string (id ^ ":" ^ secret) in
     let headers = Header.init_with "Authorization" basic in
-    let headers = Header.add headers "Content-Type" "application/json" in
-    Query.Json.to_string {query = "Hello, world!"}
-    >>= (fun query -> Client.post ~body:(`String query) ~headers app_uri)
-    >>= Error.handle
-    >>=? (fun (_, body) -> Body.to_string body >>= Result.Json.of_string)
-    >>=? fun {result} ->
-    if result = "Hello, world!"
-    then Lwt.return_ok ()
-    else Lwt.return_error Error.Unknown
+    App.call ~headers {query = "Hello, world!"} >>=? check
 
-  let user_uri = Uri.of_string "https://api.dropboxapi.com/2/check/user"
+  module UserEndpoint = struct
+    let uri = Root.api "/check/user"
+  end
+
+  module User = Function (C) (Query) (Result) (UserEndpoint)
 
   let user session =
     let headers = Session.headers session in
-    Query.Json.to_string {query = "Hello, world!"}
-    >>= (fun query -> Client.post ~body:(`String query) ~headers user_uri)
-    >>= Error.handle
-    >>=? (fun (_, body) -> Body.to_string body >>= Result.Json.of_string)
-    >>=? fun {result} ->
-    if result = "Hello, world!"
-    then Lwt.return_ok ()
-    else Lwt.return_error Error.Unknown
+    User.call ~headers {query = "Hello, world!"} >>=? check
 end

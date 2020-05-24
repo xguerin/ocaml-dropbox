@@ -1,5 +1,6 @@
+open Api
+open RemoteProcedureCall
 open Infix
-open Lwt.Infix
 
 module Protocol = struct
   module Name = struct
@@ -91,40 +92,57 @@ module Protocol = struct
   end
 end
 
-module S (Client : Cohttp_lwt.S.Client) = struct
-  open Cohttp_lwt
+module S (C : Cohttp_lwt.S.Client) = struct
   open Protocol
 
-  let get_account_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/users/get_account"
+  (*
+   * Get account.
+   *)
 
-  let get_account (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "get_account")
+  let get_account_uri = Root.api "/users/get_account"
+  let get_account (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
 
-  let get_account_batch_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/users/get_account_batch"
+  (*
+   * Get account batch.
+   *)
+
+  let get_account_batch_uri = Root.api "/users/get_account_batch"
 
   let get_account_batch (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "get_account_batch")
+    Lwt.return_error Error.Not_implemented
 
-  let get_current_account_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/users/get_current_account"
+  (*
+   * Get current account.
+   *)
+
+  module GetCurrentAccount = struct
+    module Uri = struct
+      let uri = Root.api "/users/get_current_account"
+    end
+
+    module Fn = Supplier (C) (Account) (Uri)
+  end
 
   let get_current_account session =
+    let get_info Account.Type.{name; _} = Lwt.return_ok name in
     let headers = Session.headers session in
-    Client.post ~headers get_current_account_uri
-    >>= Error.handle
-    >>=? (fun (_, body) -> Body.to_string body >>= Account.Json.of_string)
-    >>=? fun {name; _} -> Lwt.return_ok name
+    GetCurrentAccount.Fn.call ~headers () >>=? get_info
 
-  let get_space_usage_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/users/get_space_usage"
+  (*
+   * Get space usage.
+   *)
+
+  module GetSpaceUsage = struct
+    module Uri = struct
+      let uri = Root.api "/users/get_space_usage"
+    end
+
+    module Fn = Supplier (C) (SpaceUsage) (Uri)
+  end
 
   let get_space_usage session =
+    let get_info SpaceUsage.Type.{used; allocation = {allocated; _}} =
+      Lwt.return_ok (used, allocated) in
     let headers = Session.headers session in
-    Client.post ~headers get_space_usage_uri
-    >>= Error.handle
-    >>=? (fun (_, body) -> Body.to_string body >>= SpaceUsage.Json.of_string)
-    >>=? fun {used; allocation = {allocated; _}; _} ->
-    Lwt.return_ok (used, allocated)
+    GetSpaceUsage.Fn.call ~headers () >>=? get_info
 end

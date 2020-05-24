@@ -1,5 +1,6 @@
+open Api
+open RemoteProcedureCall
 open Infix
-open Lwt.Infix
 
 module Protocol = struct
   module CountFileRequestResult = struct
@@ -57,68 +58,81 @@ module Protocol = struct
   end
 end
 
-module S (Client : Cohttp_lwt.S.Client) = struct
-  open Cohttp
-  open Cohttp_lwt
+module S (C : Cohttp_lwt.S.Client) = struct
   open Protocol
 
-  let count_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/count"
+  (*
+   * Count.
+   *)
+
+  module Count = struct
+    module Uri = struct
+      let uri = Root.api "/file_requests/count"
+    end
+
+    module Fn = Supplier (C) (CountFileRequestResult) (Uri)
+  end
 
   let count session =
     let module Result = CountFileRequestResult in
+    let get_count Result.Type.{file_request_count; _} =
+      Lwt.return_ok file_request_count in
     let headers = Session.headers session in
-    Client.post ~headers count_uri
-    >>= Error.handle
-    >>=? (fun (_, body) -> Body.to_string body >>= Result.Json.of_string)
-    >>=? fun {file_request_count; _} -> Lwt.return_ok file_request_count
+    Count.Fn.call ~headers () >>=? get_count
 
-  let create_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/create"
+  (*
+   * Create.
+   *)
+
+  module Create = struct
+    module Uri = struct
+      let uri = Root.api "/file_requests/create"
+    end
+
+    module Fn = Function (C) (CreateFileRequestArgs) (FileRequest) (Uri)
+  end
 
   let create ~title ~destination ?deadline ?(open_ = true) session =
-    let module Deadline = FileRequestDeadline in
     let module Args = CreateFileRequestArgs in
-    let module Result = FileRequest in
-    let deadline = Option.map Deadline.make deadline in
+    let deadline = Option.map FileRequestDeadline.make deadline in
     let args = Args.Type.{title; destination; deadline; open_} in
     let headers = Session.headers session in
-    let headers = Header.add headers "Content-Type" "application/json" in
-    Args.Json.to_string args
-    >>= (fun c -> Client.post ~body:(`String c) ~headers create_uri)
-    >>= Error.handle
-    >>=? fun (_, body) -> Body.to_string body >>= Result.Json.of_string
+    Create.Fn.call ~headers args
 
-  let delete_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/delete"
+  (*
+   * Delete.
+   *)
 
-  let delete (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "delete")
+  let delete_uri = Root.api "/file_requests/delete"
+  let delete (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
 
-  let delete_all_closed_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/delete_all_closed"
+  (*
+   * Delete all closed.
+   *)
+
+  let delete_all_closed_uri = Root.api "/file_requests/delete_all_closed"
 
   let delete_all_closed (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "delete_all_closed")
+    Lwt.return_error Error.Not_implemented
 
-  let get_uri = Uri.of_string "https://api.dropboxapi.com/2/file_requests/get"
-  let get (_ : Session.Type.t) = Lwt.return_error (Error.Not_implemented "get")
+  (*
+   * Get.
+   *)
 
-  let list_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/list_v2"
+  let get_uri = Root.api "/file_requests/get"
+  let get (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
 
-  let list (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "list")
+  (*
+   * List.
+   *)
 
-  let list_continue_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/list/continue"
+  let list_uri = Root.api "/file_requests/list"
+  let list (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
 
-  let list_continue (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "list_continue")
+  (*
+   * Update.
+   *)
 
-  let update_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/file_requests/update"
-
-  let update (_ : Session.Type.t) =
-    Lwt.return_error (Error.Not_implemented "update")
+  let update_uri = Root.api "/file_requests/update"
+  let update (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
 end

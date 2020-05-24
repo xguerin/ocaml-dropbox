@@ -1,8 +1,9 @@
+open Api
+open RemoteProcedureCall
 open Infix
-open Lwt.Infix
 
 module Protocol = struct
-  module Token = struct
+  module Result = struct
     module Type = struct
       type t =
         { access_token : string
@@ -17,9 +18,12 @@ module Protocol = struct
   end
 end
 
-module S (Client : Cohttp_lwt.S.Client) = struct
-  open Cohttp_lwt
-  open Protocol.Token
+module S (C : Cohttp_lwt.S.Client) = struct
+  open Protocol
+
+  (*
+   * Authorize.
+   *)
 
   let authorize_uri = Uri.of_string "https://www.dropbox.com/oauth2/authorize"
 
@@ -47,10 +51,17 @@ module S (Client : Cohttp_lwt.S.Client) = struct
     let q = match locale with Some l -> ("locale", [l]) :: q | None -> q in
     Uri.with_query authorize_uri q
 
-  type code = string
-  type token = string
+  (*
+   * Token.
+   *)
 
-  let token_uri = Uri.of_string "https://api.dropboxapi.com/oauth2/token"
+  module Token = struct
+    module Uri = struct
+      let uri = Uri.of_string "https://api.dropboxapi.com/oauth2/token"
+    end
+
+    module Fn = Supplier (C) (Result) (Uri)
+  end
 
   let token ?redirect_uri code ~id ~secret =
     let q =
@@ -62,15 +73,23 @@ module S (Client : Cohttp_lwt.S.Client) = struct
       match redirect_uri with
       | None -> q
       | Some u -> ("redirect_uri", [Uri.to_string u]) :: q in
-    Client.post @@ Uri.with_query token_uri q
-    >>= Error.handle
-    >>=? (fun (_, body) -> Body.to_string body >>= Json.of_string)
-    >>=? fun {access_token; _} -> Lwt.return_ok @@ Session.make access_token
+    let get_info Result.Type.{access_token; _} =
+      Lwt.return_ok @@ Session.make access_token in
+    Token.Fn.call ~q () >>=? get_info
 
-  let revoke_uri =
-    Uri.of_string "https://api.dropboxapi.com/2/auth/token/revoke"
+  (*
+   * Revoke.
+   *)
+
+  module Revoke = struct
+    module Uri = struct
+      let uri = Root.api "/auth/token/revoke"
+    end
+
+    module Fn = Void (C) (Uri)
+  end
 
   let revoke session =
     let headers = Session.headers session in
-    Client.post ~headers revoke_uri >>= Error.handle
+    Revoke.Fn.call ~headers ()
 end

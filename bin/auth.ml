@@ -1,6 +1,7 @@
-module Auth = Dropbox.Auth.S (Cohttp_lwt_unix.Client)
+open Dropbox
 
 let () =
+  let module Auth = Auth.S (Cohttp_lwt_unix.Client) in
   (*
    * Declare log reporter and level.
    *)
@@ -35,12 +36,12 @@ let () =
   | Some id, Some secret, Some code, None -> (
     let op = Auth.token ~id ~secret code in
     match Lwt_main.run op with
-    | Ok session -> Logs.app (fun m -> m "%a" Dropbox.Session.pp session)
-    | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err))
+    | Ok session -> Logs.app (fun m -> m "%a" Session.pp session)
+    | Error err -> Logs.err (fun m -> m "%a" Error.pp err))
   | None, None, None, Some token -> (
-    let session = Dropbox.Session.make token in
+    let session = Session.make token in
     let op = Auth.revoke session in
     match Lwt_main.run op with
     | Ok _ -> Logs.app (fun m -> m "Revoked")
-    | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err))
+    | Error err -> Logs.err (fun m -> m "%a" Error.pp err))
   | _ -> Logs.err (fun m -> m "Invalid options")
