@@ -15,6 +15,7 @@
  (name ocaml-dropbox)
  (synopsis "OCaml Dropbox API")
  (depends
+  (ISO8601 (>= 0.2.6))
   (base64 (>= 3.4.0))
   (dune (> 2.0))
   (lwt (>= 5.0.0))
