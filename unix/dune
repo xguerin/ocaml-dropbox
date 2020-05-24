@@ -1,4 +1,4 @@
 (library
  (name dropbox_lwt_unix)
- (public_name ocaml-dropbox-lwt-unix)
+ (public_name ocaml-dropbox-lwt-unix.api)
  (libraries cohttp-lwt-unix dropbox))

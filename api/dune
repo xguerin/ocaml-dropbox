@@ -1,6 +1,6 @@
 (library
  (name dropbox)
- (public_name ocaml-dropbox)
+ (public_name ocaml-dropbox.api)
  (libraries ISO8601 base64 cohttp-lwt lwt uri)
  (preprocess
   (pps ppx_deriving_yojson lwt_ppx)))
