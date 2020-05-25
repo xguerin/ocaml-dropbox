@@ -66,11 +66,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Count = struct
-    module Uri = struct
+    module Info = struct
       let uri = Root.api "/file_requests/count"
     end
 
-    module Fn = Supplier (C) (CountFileRequestResult) (Uri)
+    module Fn = Supplier (C) (CountFileRequestResult) (Info)
   end
 
   let count session =
@@ -85,11 +85,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Create = struct
-    module Uri = struct
+    module Info = struct
       let uri = Root.api "/file_requests/create"
     end
 
-    module Fn = Function (C) (CreateFileRequestArgs) (FileRequest) (Uri)
+    module Fn = Function (C) (CreateFileRequestArgs) (FileRequest) (Info)
   end
 
   let create ~title ~destination ?deadline ?(open_ = true) session =

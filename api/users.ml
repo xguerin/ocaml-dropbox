@@ -116,11 +116,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module GetCurrentAccount = struct
-    module Uri = struct
+    module Info = struct
       let uri = Root.api "/users/get_current_account"
     end
 
-    module Fn = Supplier (C) (Account) (Uri)
+    module Fn = Supplier (C) (Account) (Info)
   end
 
   let get_current_account session =
@@ -133,11 +133,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module GetSpaceUsage = struct
-    module Uri = struct
+    module Info = struct
       let uri = Root.api "/users/get_space_usage"
     end
 
-    module Fn = Supplier (C) (SpaceUsage) (Uri)
+    module Fn = Supplier (C) (SpaceUsage) (Info)
   end
 
   let get_space_usage session =

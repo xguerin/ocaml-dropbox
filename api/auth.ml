@@ -56,11 +56,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Token = struct
-    module Uri = struct
+    module Info = struct
       let uri = Uri.of_string "https://api.dropboxapi.com/oauth2/token"
     end
 
-    module Fn = Supplier (C) (Result) (Uri)
+    module Fn = Supplier (C) (Result) (Info)
   end
 
   let token ?redirect_uri code ~id ~secret =
@@ -82,11 +82,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Revoke = struct
-    module Uri = struct
+    module Info = struct
       let uri = Root.api "/auth/token/revoke"
     end
 
-    module Fn = Void (C) (Uri)
+    module Fn = Void (C) (Info)
   end
 
   let revoke session =

@@ -13,6 +13,7 @@ type t =
   | Endpoint_specific of endpoint
   | Too_many_requests of int
   | Not_implemented
+  | Missing_header
   | Server
   | Serdes of string
   | Unknown
@@ -53,6 +54,7 @@ let pp ppf = function
     Format.pp_print_string ppf ("Endpoint error: " ^ err)
   | Too_many_requests _ -> Format.pp_print_string ppf "Too many requests"
   | Not_implemented -> Format.pp_print_string ppf "Not implemented"
+  | Missing_header -> Format.pp_print_string ppf "Missing header"
   | Server -> Format.pp_print_string ppf "Server-side error"
   | Serdes v -> Format.pp_print_string ppf ("Serialization error: " ^ v)
   | Unknown -> Format.pp_print_string ppf "Unknown error"

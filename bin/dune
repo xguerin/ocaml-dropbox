@@ -1,3 +1,3 @@
 (executables
- (names auth check users)
+ (names auth check files users)
  (libraries dropbox_lwt_unix logs.lwt))

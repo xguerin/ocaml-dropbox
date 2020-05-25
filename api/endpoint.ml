@@ -16,6 +16,23 @@ module Root = struct
   let content sub = Uri.of_string ("https://content.dropboxapi.com/2" ^ sub)
 end
 
+module ContentDownload = struct
+  module Function (C : S.Client) (I : Data) (O : Data) (E : Info) = struct
+    let call ?(headers = Header.init ()) ?q v =
+      let%lwt content = I.Json.to_string v in
+      let headers = Header.add headers "Dropbox-API-Arg" content in
+      let uri =
+        match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
+      C.post ~headers uri
+      >>= Error.handle
+      >>=? fun (resp, body) ->
+      (match Header.get (Response.headers resp) "Dropbox-API-Result" with
+      | Some value -> O.Json.of_string value
+      | None -> Lwt.return_error Error.Missing_header)
+      >>=? fun result -> Lwt.return_ok (result, body)
+  end
+end
+
 module RemoteProcedureCall = struct
   module Function (C : S.Client) (I : Data) (O : Data) (E : Info) = struct
     let call ?(headers = Header.init ()) ?q v =
