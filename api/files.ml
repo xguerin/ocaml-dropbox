@@ -1,150 +1,153 @@
 open Endpoint
 
-module Protocol = struct
-  module DownloadArg = struct
-    module Type = struct
-      type t = {path : string} [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module Dimensions = struct
-    module Type = struct
-      type t =
-        { height : Int64.t
-        ; width : Int64.t }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module GpsCoordinates = struct
-    module Type = struct
-      type t =
-        { latitude : float
-        ; longitude : float }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module MediaMetadata = struct
-    module Type = struct
-      type t =
-        { tag : string [@key ".tag"]
-        ; dimensions : (Dimensions.Type.t option[@default None])
-        ; location : (Dimensions.Type.t option[@default None])
-        ; time_taken : (string option[@default None]) }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module MediaInfo = struct
-    module Type = struct
-      type t =
-        { tag : string [@key ".tag"]
-        ; metadata : (MediaMetadata.Type.t option[@default None]) }
-      [@@deriving yojson]
-    end
-  end
-
-  module SymlinkInfo = struct
-    module Type = struct
-      type t = {target : string} [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module FileSharingInfo = struct
-    module Type = struct
-      type t =
-        { read_only : bool
-        ; parent_shared_folder_id : string
-        ; modified_by : (string option[@default None]) }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module ExportInfo = struct
-    module Type = struct
-      type t = {export_as : (string option[@default None])} [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module PropertyField = struct
-    module Type = struct
-      type t =
-        { name : string
-        ; value : string }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module PropertyGroup = struct
-    module Type = struct
-      type t =
-        { template_id : string
-        ; fields : PropertyField.Type.t list }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module FileLockMetadata = struct
-    module Type = struct
-      type t =
-        { is_lockholder : (bool option[@default None])
-        ; lockholder_name : (string option[@default None])
-        ; lockholder_account_id : (string option[@default None])
-        ; created : (string option[@default None]) }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-
-  module FileMetadata = struct
-    module Type = struct
-      type t =
-        { name : string
-        ; id : string
-        ; client_modified : string
-        ; server_modified : string
-        ; rev : string
-        ; size : Int64.t
-        ; path_lower : (string option[@default None])
-        ; path_display : (string option[@default None])
-        ; media_info : (MediaInfo.Type.t option[@default None])
-        ; symlink_info : (SymlinkInfo.Type.t option[@default None])
-        ; sharing_info : (FileSharingInfo.Type.t option[@default None])
-        ; is_downloadable : bool
-        ; export_info : (ExportInfo.Type.t option[@default None])
-        ; property_groups : (PropertyGroup.Type.t option[@default None])
-        ; has_explicit_shared_members : (bool option[@default None])
-        ; content_hash : (string option[@default None])
-        ; file_lock_info : (FileLockMetadata.Type.t option[@default None]) }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-end
-
 module S (C : Cohttp_lwt.S.Client) = struct
-  open Protocol
+  (*
+   * Protocol.
+   *)
+
+  module Protocol = struct
+    module DownloadArg = struct
+      module Type = struct
+        type t = {path : string} [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module Dimensions = struct
+      module Type = struct
+        type t =
+          { height : Int64.t
+          ; width : Int64.t }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module GpsCoordinates = struct
+      module Type = struct
+        type t =
+          { latitude : float
+          ; longitude : float }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module MediaMetadata = struct
+      module Type = struct
+        type t =
+          { tag : string [@key ".tag"]
+          ; dimensions : (Dimensions.Type.t option[@default None])
+          ; location : (Dimensions.Type.t option[@default None])
+          ; time_taken : (string option[@default None]) }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module MediaInfo = struct
+      module Type = struct
+        type t =
+          { tag : string [@key ".tag"]
+          ; metadata : (MediaMetadata.Type.t option[@default None]) }
+        [@@deriving yojson]
+      end
+    end
+
+    module SymlinkInfo = struct
+      module Type = struct
+        type t = {target : string} [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module FileSharingInfo = struct
+      module Type = struct
+        type t =
+          { read_only : bool
+          ; parent_shared_folder_id : string
+          ; modified_by : (string option[@default None]) }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module ExportInfo = struct
+      module Type = struct
+        type t = {export_as : (string option[@default None])}
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module PropertyField = struct
+      module Type = struct
+        type t =
+          { name : string
+          ; value : string }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module PropertyGroup = struct
+      module Type = struct
+        type t =
+          { template_id : string
+          ; fields : PropertyField.Type.t list }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module FileLockMetadata = struct
+      module Type = struct
+        type t =
+          { is_lockholder : (bool option[@default None])
+          ; lockholder_name : (string option[@default None])
+          ; lockholder_account_id : (string option[@default None])
+          ; created : (string option[@default None]) }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module FileMetadata = struct
+      module Type = struct
+        type t =
+          { name : string
+          ; id : string
+          ; client_modified : string
+          ; server_modified : string
+          ; rev : string
+          ; size : Int64.t
+          ; path_lower : (string option[@default None])
+          ; path_display : (string option[@default None])
+          ; media_info : (MediaInfo.Type.t option[@default None])
+          ; symlink_info : (SymlinkInfo.Type.t option[@default None])
+          ; sharing_info : (FileSharingInfo.Type.t option[@default None])
+          ; is_downloadable : bool
+          ; export_info : (ExportInfo.Type.t option[@default None])
+          ; property_groups : (PropertyGroup.Type.t option[@default None])
+          ; has_explicit_shared_members : (bool option[@default None])
+          ; content_hash : (string option[@default None])
+          ; file_lock_info : (FileLockMetadata.Type.t option[@default None]) }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+  end
 
   (*
    * Copy.
@@ -242,13 +245,14 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Download = struct
-    open ContentDownload
+    module Arg = Protocol.DownloadArg
+    module Result = Protocol.FileMetadata
 
     module Info = struct
       let uri = Root.content "/files/download"
     end
 
-    module Fn = Function (C) (DownloadArg) (FileMetadata) (Info)
+    module Fn = ContentDownload.Function (C) (Arg) (Result) (Info)
   end
 
   let download ~session path =

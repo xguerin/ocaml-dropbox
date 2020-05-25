@@ -35,9 +35,11 @@ let () =
   let session = Dropbox.Session.make token in
   let op =
     Files.download ~session path
-    >>=? fun (_, body) ->
-    Cohttp_lwt.Body.to_string body
-    >>= fun body -> Logs_lwt.app (fun m -> m "%s" body) >>= Lwt.return_ok in
+    >>=? fun ({name; _}, body) ->
+    Lwt_io.open_file ~mode:Output name
+    >>= fun channel ->
+    Lwt_io.write_lines channel @@ Cohttp_lwt.Body.to_stream body
+    >>= fun () -> Lwt_io.close channel >>= Lwt.return_ok in
   match Lwt_main.run op with
   | Ok () -> ()
   | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err)

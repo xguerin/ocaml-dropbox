@@ -2,24 +2,26 @@ open Endpoint
 open RemoteProcedureCall
 open Infix
 
-module Protocol = struct
-  module Result = struct
-    module Type = struct
-      type t =
-        { access_token : string
-        ; token_type : string
-        ; account_id : (string option[@default None])
-        ; team_id : (string option[@default None])
-        ; uid : string }
-      [@@deriving yojson]
-    end
-
-    module Json = Json.S (Type)
-  end
-end
-
 module S (C : Cohttp_lwt.S.Client) = struct
-  open Protocol
+  (*
+   * Protocol.
+   *)
+
+  module Protocol = struct
+    module Result = struct
+      module Type = struct
+        type t =
+          { access_token : string
+          ; token_type : string
+          ; account_id : (string option[@default None])
+          ; team_id : (string option[@default None])
+          ; uid : string }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+  end
 
   (*
    * Authorize.
@@ -56,6 +58,8 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Token = struct
+    module Result = Protocol.Result
+
     module Info = struct
       let uri = Uri.of_string "https://api.dropboxapi.com/oauth2/token"
     end
@@ -73,7 +77,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
       match redirect_uri with
       | None -> q
       | Some u -> ("redirect_uri", [Uri.to_string u]) :: q in
-    let get_info Result.Type.{access_token; _} =
+    let get_info Protocol.Result.Type.{access_token; _} =
       Lwt.return_ok @@ Session.make access_token in
     Token.Fn.call ~q () >>=? get_info
 
