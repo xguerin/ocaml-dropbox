@@ -8,8 +8,8 @@ end
 module type Sig = sig
   type t
 
-  val of_string : string -> (t, Error.t) result Lwt.t
-  val to_string : t -> string Lwt.t
+  val of_string : string -> t option
+  val to_string : t -> string
 end
 
 module S (D : Deriving) : Sig with type t = D.t = struct
@@ -17,8 +17,8 @@ module S (D : Deriving) : Sig with type t = D.t = struct
 
   let of_string str =
     match D.of_yojson @@ Yojson.Safe.from_string str with
-    | Ok t -> Lwt.return_ok t
-    | Error error -> Lwt.return_error (Error.Serdes error)
+    | Ok t -> Some t
+    | Error _ -> None
 
-  let to_string t = Lwt.return @@ Yojson.Safe.to_string @@ D.to_yojson t
+  let to_string t = Yojson.Safe.to_string @@ D.to_yojson t
 end

@@ -15,7 +15,7 @@ type t =
   | Not_implemented
   | Missing_header
   | Server
-  | Serdes of string
+  | Serdes
   | Unknown
 
 let handle (resp, body) =
@@ -30,7 +30,7 @@ let handle (resp, body) =
     let%lwt content = Cohttp_lwt.Body.to_string body in
     match Yojson.Safe.from_string content |> endpoint_of_yojson with
     | Ok ep -> Lwt.return_error (Endpoint_specific ep)
-    | Error error -> Lwt.return_error (Serdes error))
+    | Error _ -> Lwt.return_error Serdes)
   | Response.{status = `Too_many_requests; headers; _} ->
     let delay =
       match
@@ -56,5 +56,5 @@ let pp ppf = function
   | Not_implemented -> Format.pp_print_string ppf "Not implemented"
   | Missing_header -> Format.pp_print_string ppf "Missing header"
   | Server -> Format.pp_print_string ppf "Server-side error"
-  | Serdes v -> Format.pp_print_string ppf ("Serialization error: " ^ v)
+  | Serdes -> Format.pp_print_string ppf "Serialization error"
   | Unknown -> Format.pp_print_string ppf "Unknown error"
