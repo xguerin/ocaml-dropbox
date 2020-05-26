@@ -6,6 +6,7 @@ cases-exp-indent = 2
 field-space = loose
 if-then-else = keyword-first
 indicate-multiline-delimiters = no
+indicate-nested-or-patterns = unsafe-no
 let-and = sparse
 sequence-style = terminator
 type-decl = sparse

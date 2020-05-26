@@ -1,3 +1,5 @@
 (executables
  (names auth check files users)
- (libraries dropbox_lwt_unix logs.lwt))
+ (libraries dropbox_lwt_unix logs.lwt)
+ (preprocess
+  (pps lwt_ppx)))

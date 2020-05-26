@@ -17,9 +17,22 @@ module S (C : Cohttp_lwt.S.Client) = struct
     end
 
     module CountFileRequestError = struct
-      include Protocol.Tagged
+      module Type = struct
+        type t = Disabled_for_team
 
-      let to_string Type.{tag} = tag
+        let of_yojson = function
+          | `Assoc [(".tag", `String "disabled_for_team")]
+          | `String "disabled_for_team" ->
+            Ok Disabled_for_team
+          | _ -> Error "Invalid CountFileRequestError format"
+
+        let to_yojson = function
+          | Disabled_for_team -> `String "disabled_for_team"
+      end
+
+      module Json = Json.S (Type)
+
+      let to_string = function Type.Disabled_for_team -> "Disabled for team"
     end
 
     module FileRequestDeadline = struct
@@ -69,9 +82,60 @@ module S (C : Cohttp_lwt.S.Client) = struct
     end
 
     module CreateFileRequestError = struct
-      include Protocol.Tagged
+      module Type = struct
+        type t =
+          | App_lacks_access
+          | Disabled_for_team
+          | Email_unverified
+          | Invalid_location
+          | No_permission
+          | Not_a_folder
+          | Not_found
+          | Rate_limit
+          | Validation_error
 
-      let to_string Type.{tag} = tag
+        let of_string = function
+          | "app_lacks_access" -> Ok App_lacks_access
+          | "disabled_for_team" -> Ok Disabled_for_team
+          | "email_unverified" -> Ok Email_unverified
+          | "invalid_location" -> Ok Invalid_location
+          | "no_permission" -> Ok No_permission
+          | "not_a_folder" -> Ok Not_a_folder
+          | "not_found" -> Ok Not_found
+          | "rate_limit" -> Ok Rate_limit
+          | "validation_error" -> Ok Validation_error
+          | _ -> Error "Invalid CreateFileRequestError format"
+
+        let to_string = function
+          | App_lacks_access -> "app_lacks_access"
+          | Disabled_for_team -> "disabled_for_team"
+          | Email_unverified -> "email_unverified"
+          | Invalid_location -> "invalid_location"
+          | No_permission -> "no_permission"
+          | Not_a_folder -> "not_a_folder"
+          | Not_found -> "not_found"
+          | Rate_limit -> "rate_limit"
+          | Validation_error -> "validation_error"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] | `String v -> of_string v
+          | _ -> Error "Invalid CreateFileRequestError format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+
+      let to_string = function
+        | Type.App_lacks_access -> "App lacks access"
+        | Type.Disabled_for_team -> "Disabled for team"
+        | Type.Email_unverified -> "Email unverified"
+        | Type.Invalid_location -> "Invalid location"
+        | Type.No_permission -> "No permission"
+        | Type.Not_a_folder -> "Not a folder"
+        | Type.Not_found -> "Not found"
+        | Type.Rate_limit -> "Rate limit"
+        | Type.Validation_error -> "Validation error"
     end
   end
 

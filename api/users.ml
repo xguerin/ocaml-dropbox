@@ -22,33 +22,215 @@ module S (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.S (Type)
     end
 
-    module Team = struct
+    module SharedFolderMemberPolicy = struct
       module Type = struct
-        type sharing_policies =
-          { shared_folder_member_policy : Protocol.Tagged.Type.t
-          ; shared_folder_join_policy : Protocol.Tagged.Type.t
-          ; shared_link_create_policy : Protocol.Tagged.Type.t }
-        [@@deriving yojson]
-
         type t =
-          { id : string
-          ; name : string
-          ; sharing_policies : sharing_policies
-          ; office_addin_policies : Protocol.Tagged.Type.t }
+          | Anyone
+          | Team
+
+        let of_string = function
+          | "anyone" -> Ok Anyone
+          | "team" -> Ok Team
+          | _ -> Error "Invalid SharedFolderMemberPolicy format"
+
+        let to_string = function Anyone -> "anyone" | Team -> "team"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] -> of_string v
+          | `String v -> of_string v
+          | _ -> Error "Invalid SharedFolderMemberPolicy format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module SharedFolderJoinPolicy = struct
+      module Type = struct
+        type t =
+          | From_anyone
+          | From_team_only
+
+        let of_string = function
+          | "from_anyone" -> Ok From_anyone
+          | "from_team_only" -> Ok From_team_only
+          | _ -> Error "Invalid SharedFolderJoinPolicy format"
+
+        let to_string = function
+          | From_anyone -> "from_anyone"
+          | From_team_only -> "from_team_only"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] -> of_string v
+          | `String v -> of_string v
+          | _ -> Error "Invalid SharedFolderJoinPolicy format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module SharedLinkCreatePolicy = struct
+      module Type = struct
+        type t =
+          | Default_public
+          | Default_team_only
+          | Team_only
+
+        let of_string = function
+          | "default_public" -> Ok Default_public
+          | "default_team_only" -> Ok Default_team_only
+          | "team_only" -> Ok Team_only
+          | _ -> Error "Invalid SharedLinkCreatePolicy format"
+
+        let to_string = function
+          | Default_public -> "default_public"
+          | Default_team_only -> "default_team_only"
+          | Team_only -> "team_only"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] -> of_string v
+          | `String v -> of_string v
+          | _ -> Error "Invalid SharedLinkCreatePolicy format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module TeamSharingPolicies = struct
+      module Type = struct
+        type t =
+          { shared_folder_member_policy : SharedFolderMemberPolicy.Type.t
+          ; shared_folder_join_policy : SharedFolderJoinPolicy.Type.t
+          ; shared_link_create_policy : SharedLinkCreatePolicy.Type.t }
         [@@deriving yojson]
       end
 
       module Json = Json.S (Type)
     end
 
-    module Account = struct
+    module OfficeAddinPolicy = struct
       module Type = struct
-        type root_info =
-          { tag : string [@key ".tag"]
-          ; root_namespace_id : string
+        type t =
+          | Disabled
+          | Enabled
+
+        let of_string = function
+          | "disabled" -> Ok Disabled
+          | "enabled" -> Ok Enabled
+          | _ -> Error "Invalid OfficeAddinPolicy format"
+
+        let to_string = function Disabled -> "disabled" | Enabled -> "enabled"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] -> of_string v
+          | `String v -> of_string v
+          | _ -> Error "Invalid OfficeAddinPolicy format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module FullTeam = struct
+      module Type = struct
+        type t =
+          { id : string
+          ; name : string
+          ; sharing_policies : TeamSharingPolicies.Type.t
+          ; office_addin_policies : OfficeAddinPolicy.Type.t }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module AccountType = struct
+      module Type = struct
+        type t =
+          | Basic
+          | Pro
+          | Business
+
+        let of_string = function
+          | "basic" -> Ok Basic
+          | "pro" -> Ok Pro
+          | "business" -> Ok Business
+          | _ -> Error "Invalid AccountType format"
+
+        let to_string = function
+          | Basic -> "basic"
+          | Pro -> "pro"
+          | Business -> "business"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] -> of_string v
+          | `String v -> of_string v
+          | _ -> Error "Invalid AccountType format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module TeamRootInfo = struct
+      module Type = struct
+        type t =
+          { root_namespace_id : string
+          ; home_namespace_id : string
+          ; home_path : string }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module UserRootInfo = struct
+      module Type = struct
+        type t =
+          { root_namespace_id : string
           ; home_namespace_id : string }
         [@@deriving yojson]
+      end
 
+      module Json = Json.S (Type)
+    end
+
+    module RootInfo = struct
+      module Type = struct
+        type t =
+          | Team of TeamRootInfo.Type.t
+          | User of UserRootInfo.Type.t
+
+        let of_yojson v =
+          let sorted = Yojson.Safe.sort v in
+          match sorted with
+          | `Assoc [(".tag", `String "team"); ("team", team)] ->
+            TeamRootInfo.Type.of_yojson team |>=? fun team -> Ok (Team team)
+          | `Assoc [(".tag", `String "user"); ("user", user)] ->
+            UserRootInfo.Type.of_yojson user |>=? fun user -> Ok (User user)
+          | _ -> Error "Invalid RootInfo format"
+
+        let to_yojson = function
+          | Team team ->
+            `Assoc
+              [ (".tag", `String "team")
+              ; ("team", TeamRootInfo.Type.to_yojson team) ]
+          | User user ->
+            `Assoc
+              [ (".tag", `String "user")
+              ; ("user", UserRootInfo.Type.to_yojson user) ]
+      end
+    end
+
+    module Account = struct
+      module Type = struct
         type t =
           { account_id : string
           ; name : Name.Type.t
@@ -58,11 +240,11 @@ module S (C : Cohttp_lwt.S.Client) = struct
           ; locale : string
           ; referral_link : string
           ; is_paired : bool
-          ; account_type : Protocol.Tagged.Type.t
-          ; root_info : root_info
+          ; account_type : AccountType.Type.t
+          ; root_info : RootInfo.Type.t
           ; profile_photo_url : (string option[@default None])
           ; country : string
-          ; team : (Team.Type.t option[@default None])
+          ; team : (FullTeam.Type.t option[@default None])
           ; team_member_id : (string option[@default None]) }
         [@@deriving yojson]
       end
