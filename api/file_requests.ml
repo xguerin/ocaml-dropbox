@@ -16,6 +16,12 @@ module S (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.S (Type)
     end
 
+    module CountFileRequestError = struct
+      include Protocol.Tagged
+
+      let to_string Type.{tag} = tag
+    end
+
     module FileRequestDeadline = struct
       module Type = struct
         type t =
@@ -61,6 +67,12 @@ module S (C : Cohttp_lwt.S.Client) = struct
 
       module Json = Json.S (Type)
     end
+
+    module CreateFileRequestError = struct
+      include Protocol.Tagged
+
+      let to_string Type.{tag} = tag
+    end
   end
 
   (*
@@ -69,12 +81,13 @@ module S (C : Cohttp_lwt.S.Client) = struct
 
   module Count = struct
     module Result = Protocol.CountFileRequestResult
+    module Error = Error.S (Protocol.CountFileRequestError)
 
     module Info = struct
       let uri = Root.api "/file_requests/count"
     end
 
-    module Fn = Supplier (C) (Result) (Info)
+    module Fn = Supplier (C) (Result) (Error) (Info)
   end
 
   let count session =
@@ -90,12 +103,13 @@ module S (C : Cohttp_lwt.S.Client) = struct
   module Create = struct
     module Args = Protocol.CreateFileRequestArgs
     module Result = Protocol.FileRequest
+    module Error = Error.S (Protocol.CreateFileRequestError)
 
     module Info = struct
       let uri = Root.api "/file_requests/create"
     end
 
-    module Fn = Function (C) (Args) (Result) (Info)
+    module Fn = Function (C) (Args) (Result) (Error) (Info)
   end
 
   let create ~title ~destination ?deadline ?(open_ = true) session =
@@ -109,7 +123,10 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   let delete_uri = Root.api "/file_requests/delete"
-  let delete (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
+
+  let delete (_ : Session.Type.t) =
+    let module Error = Error.S (Error.Void) in
+    Lwt.return_error Error.Not_implemented
 
   (*
    * Delete all closed.
@@ -118,6 +135,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
   let delete_all_closed_uri = Root.api "/file_requests/delete_all_closed"
 
   let delete_all_closed (_ : Session.Type.t) =
+    let module Error = Error.S (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -125,19 +143,28 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   let get_uri = Root.api "/file_requests/get"
-  let get (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
+
+  let get (_ : Session.Type.t) =
+    let module Error = Error.S (Error.Void) in
+    Lwt.return_error Error.Not_implemented
 
   (*
    * List.
    *)
 
   let list_uri = Root.api "/file_requests/list"
-  let list (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
+
+  let list (_ : Session.Type.t) =
+    let module Error = Error.S (Error.Void) in
+    Lwt.return_error Error.Not_implemented
 
   (*
    * Update.
    *)
 
   let update_uri = Root.api "/file_requests/update"
-  let update (_ : Session.Type.t) = Lwt.return_error Error.Not_implemented
+
+  let update (_ : Session.Type.t) =
+    let module Error = Error.S (Error.Void) in
+    Lwt.return_error Error.Not_implemented
 end

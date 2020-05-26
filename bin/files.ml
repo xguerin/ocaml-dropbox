@@ -42,4 +42,4 @@ let () =
     >>= fun () -> Lwt_io.close channel >>= Lwt.return_ok in
   match Lwt_main.run op with
   | Ok () -> ()
-  | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err)
+  | Error err -> Logs.err (fun m -> m "%a" Files.Download.Error.pp err)

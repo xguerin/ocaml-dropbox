@@ -30,11 +30,11 @@ let () =
     let op = Check.app ~id ~secret () in
     match Lwt_main.run op with
     | Ok _ -> Logs.app (fun m -> m "Success")
-    | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err))
+    | Error err -> Logs.err (fun m -> m "%a" Check.App.Error.pp err))
   | None, None, Some token -> (
     let session = Dropbox.Session.make token in
     let op = Check.user session in
     match Lwt_main.run op with
     | Ok _ -> Logs.app (fun m -> m "Success")
-    | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err))
+    | Error err -> Logs.err (fun m -> m "%a" Check.User.Error.pp err))
   | _ -> Logs.err (fun m -> m "Invalid options")

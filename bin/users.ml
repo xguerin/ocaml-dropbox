@@ -36,4 +36,4 @@ let () =
     >>= Lwt.return_ok in
   match Lwt_main.run op with
   | Ok () -> ()
-  | Error err -> Logs.err (fun m -> m "%a" Dropbox.Error.pp err)
+  | Error err -> Logs.err (fun m -> m "%a" Users.GetCurrentAccount.Error.pp err)

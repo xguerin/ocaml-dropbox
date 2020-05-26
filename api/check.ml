@@ -31,10 +31,10 @@ module S (C : Cohttp_lwt.S.Client) = struct
    * Common.
    *)
 
-  let check Protocol.Result.Type.{result} =
+  let check error Protocol.Result.Type.{result} =
     if result = "Hello, world!"
     then Lwt.return_ok ()
-    else Lwt.return_error Error.Unknown
+    else Lwt.return_error error
 
   (*
    * App.
@@ -43,18 +43,19 @@ module S (C : Cohttp_lwt.S.Client) = struct
   module App = struct
     module Query = Protocol.Query
     module Result = Protocol.Result
+    module Error = Error.S (Error.Void)
 
     module Info = struct
       let uri = Root.api "/check/app"
     end
 
-    module Fn = Function (C) (Query) (Result) (Info)
+    module Fn = Function (C) (Query) (Result) (Error) (Info)
   end
 
   let app ~id ~secret () =
     let basic = "Basic " ^ Base64.encode_string (id ^ ":" ^ secret) in
     let headers = Header.init_with "Authorization" basic in
-    App.Fn.call ~headers {query = "Hello, world!"} >>=? check
+    App.Fn.call ~headers {query = "Hello, world!"} >>=? check App.Error.Unknown
 
   (*
    * User.
@@ -63,15 +64,17 @@ module S (C : Cohttp_lwt.S.Client) = struct
   module User = struct
     module Query = Protocol.Query
     module Result = Protocol.Result
+    module Error = Error.S (Error.Void)
 
     module Info = struct
       let uri = Root.api "/check/user"
     end
 
-    module Fn = Function (C) (Query) (Result) (Info)
+    module Fn = Function (C) (Query) (Result) (Error) (Info)
   end
 
   let user session =
     let headers = Session.headers session in
-    User.Fn.call ~headers {query = "Hello, world!"} >>=? check
+    User.Fn.call ~headers {query = "Hello, world!"}
+    >>=? check User.Error.Unknown
 end

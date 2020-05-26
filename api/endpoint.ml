@@ -4,7 +4,7 @@ open Infix
 open Lwt.Infix
 
 module type Data = sig
-  module Json : Json.Sig
+  module Json : Json.T
 end
 
 module type Info = sig
@@ -17,11 +17,12 @@ module Root = struct
 end
 
 module ContentDownload = struct
-  module Function (C : S.Client) (I : Data) (O : Data) (E : Info) = struct
+  module Function (C : S.Client) (I : Data) (O : Data) (R : Error.T) (E : Info) =
+  struct
     let deserialize v =
       match O.Json.of_string v with
       | Some o -> Lwt.return_ok o
-      | None -> Lwt.return_error Error.Serdes
+      | None -> Lwt.return_error R.Serdes
 
     let call ?(headers = Header.init ()) ?q v =
       let content = I.Json.to_string v in
@@ -29,21 +30,22 @@ module ContentDownload = struct
       let uri =
         match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
       C.post ~headers uri
-      >>= Error.handle
+      >>= R.handle
       >>=? fun (resp, body) ->
       (match Header.get (Response.headers resp) "Dropbox-API-Result" with
       | Some value -> deserialize value
-      | None -> Lwt.return_error Error.Missing_header)
+      | None -> Lwt.return_error R.Missing_header)
       >>=? fun result -> Lwt.return_ok (result, body)
   end
 end
 
 module RemoteProcedureCall = struct
-  module Function (C : S.Client) (I : Data) (O : Data) (E : Info) = struct
+  module Function (C : S.Client) (I : Data) (O : Data) (R : Error.T) (E : Info) =
+  struct
     let deserialize v =
       match O.Json.of_string v with
       | Some o -> Lwt.return_ok o
-      | None -> Lwt.return_error Error.Serdes
+      | None -> Lwt.return_error R.Serdes
 
     let call ?(headers = Header.init ()) ?q v =
       let headers = Header.add headers "Content-Type" "application/json" in
@@ -51,26 +53,25 @@ module RemoteProcedureCall = struct
         match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
       let content = I.Json.to_string v in
       C.post ~body:(`String content) ~headers uri
-      >>= Error.handle
+      >>= R.handle
       >>=? fun (_, body) -> Body.to_string body >>= deserialize
   end
 
-  module Supplier (C : S.Client) (O : Data) (E : Info) = struct
+  module Supplier (C : S.Client) (O : Data) (R : Error.T) (E : Info) = struct
     let deserialize v =
       match O.Json.of_string v with
       | Some o -> Lwt.return_ok o
-      | None -> Lwt.return_error Error.Serdes
+      | None -> Lwt.return_error R.Serdes
 
     let call ?(headers = Header.init ()) ?q () =
       let uri =
         match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
       C.post ~headers uri
-      >>= Error.handle
+      >>= R.handle
       >>=? fun (_, body) -> Body.to_string body >>= deserialize
   end
 
-  module Void (C : S.Client) (E : Info) = struct
-    let call ?(headers = Header.init ()) () =
-      C.post ~headers E.uri >>= Error.handle
+  module Void (C : S.Client) (R : Error.T) (E : Info) = struct
+    let call ?(headers = Header.init ()) () = C.post ~headers E.uri >>= R.handle
   end
 end
