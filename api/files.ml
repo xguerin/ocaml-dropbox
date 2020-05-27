@@ -69,7 +69,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           let sorted = Yojson.Safe.sort v in
           match sorted with
           | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>=? fun path -> Ok (Path path)
+            LookupError.Type.of_yojson path |>? fun path -> Ok (Path path)
           | `Assoc [(".tag", `String "unsupported_file")]
           | `String "unsupported_file" ->
             Ok Unsupported_file
@@ -143,21 +143,21 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let of_yojson v =
           let sorted = Yojson.Safe.sort v in
           match sorted with
-          | `Assoc [(".tag", `String "photo"); ("photo", photo)] ->
-            PhotoMetadata.Type.of_yojson photo |>=? fun p -> Ok (Photo p)
-          | `Assoc [(".tag", `String "video"); ("video", video)] ->
-            VideoMetadata.Type.of_yojson video |>=? fun v -> Ok (Video v)
+          | `Assoc ((".tag", `String "photo") :: tl) ->
+            PhotoMetadata.Type.of_yojson (`Assoc tl) |>? fun p -> Ok (Photo p)
+          | `Assoc ((".tag", `String "video") :: tl) ->
+            VideoMetadata.Type.of_yojson (`Assoc tl) |>? fun v -> Ok (Video v)
           | _ -> Error "Invalid MediaMetadata format"
 
         let to_yojson = function
-          | Photo photo ->
-            `Assoc
-              [ (".tag", `String "photo")
-              ; ("photo", PhotoMetadata.Type.to_yojson photo) ]
-          | Video video ->
-            `Assoc
-              [ (".tag", `String "video")
-              ; ("video", VideoMetadata.Type.to_yojson video) ]
+          | Photo photo -> (
+            match PhotoMetadata.Type.to_yojson photo with
+            | `Assoc tl -> `Assoc ((".tag", `String "photo") :: tl)
+            | _ -> `Null)
+          | Video video -> (
+            match VideoMetadata.Type.to_yojson video with
+            | `Assoc tl -> `Assoc ((".tag", `String "video") :: tl)
+            | _ -> `Null)
       end
 
       module Json = Json.S (Type)
@@ -173,7 +173,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           let sorted = Yojson.Safe.sort v in
           match sorted with
           | `Assoc [(".tag", `String "metadata"); ("metadata", metadata)] ->
-            MediaMetadata.Type.of_yojson metadata |>=? fun m -> Ok (Metadata m)
+            MediaMetadata.Type.of_yojson metadata |>? fun m -> Ok (Metadata m)
           | `Assoc [(".tag", `String "pending")] | `String "pending" ->
             Ok Pending
           | _ -> Error "Invalid MediaInfo format"
@@ -339,7 +339,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           let sorted = Yojson.Safe.sort v in
           match sorted with
           | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>=? fun p -> Ok (Path p)
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
           | `Assoc [(".tag", `String v)] | `String v -> of_string v
           | _ -> Error "Invalid DownloadZipError format"
 
@@ -380,7 +380,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | `Assoc [(".tag", `String "path"); ("path", `String path)] ->
             Ok (Path path)
           | `Assoc [(".tag", `String "link"); ("link", link)] ->
-            SharedLinkFileInfo.Type.of_yojson link |>=? fun l -> Ok (Link l)
+            SharedLinkFileInfo.Type.of_yojson link |>? fun l -> Ok (Link l)
           | _ -> Error "Invalid PathOrLink format"
 
         let to_yojson = function
@@ -559,7 +559,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           match sorted with
           | `Assoc [(".tag", `String value)] -> of_string value
           | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>=? fun p -> Ok (Path p)
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
           | _ -> Error "Invalid ThumbnailV2Error format"
 
         let to_yojson = function
@@ -579,6 +579,222 @@ module S (C : Cohttp_lwt.S.Client) = struct
         | Type.Path v -> LookupError.to_string v
         | Type.Unsupported_extension -> "Unsupported extension"
         | Type.Unsupported_image -> "Unsupported image"
+    end
+
+    module SharedLink = struct
+      module Type = struct
+        type t =
+          { url : string
+          ; password : (string option[@default None]) }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module TemplateFilterBase = struct
+      module Type = struct
+        type t = Filter_some of string list
+
+        let of_yojson v =
+          let sorted = Yojson.Safe.sort v in
+          match sorted with
+          | `Assoc [(".tag", `String "filter_some"); ("filter_some", `List v)]
+            ->
+            let result =
+              List.fold_right
+                (fun e acc -> match e with `String v -> v :: acc | _ -> acc)
+                v [] in
+            Ok (Filter_some result)
+          | _ -> Error "Invalid Filter_some format"
+
+        let to_yojson = function
+          | Filter_some v -> `List (List.map (fun e -> `String e) v)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module ListFolderArg = struct
+      module Type = struct
+        type t =
+          { path : string
+          ; recursive : bool
+          ; include_media_info : bool
+          ; include_deleted : bool
+          ; include_has_explicit_shared_members : bool
+          ; include_mounted_folders : bool
+          ; limit : (Int32.t option[@default None])
+          ; shared_link : (SharedLink.Type.t option[@default None])
+          ; include_property_groups :
+              (TemplateFilterBase.Type.t option
+              [@default None])
+          ; include_non_downloadable_files : bool }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module DeletedMetadata = struct
+      module Type = struct
+        type t =
+          { name : string
+          ; path_lower : (string option[@default None])
+          ; path_display : (string option[@default None])
+          ; parent_shared_folder_id : (string option[@default None]) }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module Metadata = struct
+      module Type = struct
+        type t =
+          | Deleted of DeletedMetadata.Type.t
+          | File of FileMetadata.Type.t
+          | Folder of FolderMetadata.Type.t
+
+        let of_yojson v =
+          let sorted = Yojson.Safe.sort v in
+          match sorted with
+          | `Assoc ((".tag", `String "deleted") :: deleted) ->
+            DeletedMetadata.Type.of_yojson (`Assoc deleted)
+            |>? fun d -> Ok (Deleted d)
+          | `Assoc ((".tag", `String "file") :: file) ->
+            FileMetadata.Type.of_yojson (`Assoc file) |>? fun f -> Ok (File f)
+          | `Assoc ((".tag", `String "folder") :: folder) ->
+            FolderMetadata.Type.of_yojson (`Assoc folder)
+            |>? fun f -> Ok (Folder f)
+          | _ -> Error "Invalid Metadata format"
+
+        let to_yojson = function
+          | Deleted d -> (
+            match DeletedMetadata.Type.to_yojson d with
+            | `Assoc tl -> `Assoc ((".tag", `String "deleted") :: tl)
+            | _ -> `Null)
+          | File f -> (
+            match FileMetadata.Type.to_yojson f with
+            | `Assoc tl -> `Assoc ((".tag", `String "file") :: tl)
+            | _ -> `Null)
+          | Folder f -> (
+            match FolderMetadata.Type.to_yojson f with
+            | `Assoc tl -> `Assoc ((".tag", `String "folder") :: tl)
+            | _ -> `Null)
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module ListFolderResult = struct
+      module Type = struct
+        type t =
+          { entries : Metadata.Type.t list
+          ; cursor : string
+          ; has_more : bool }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module TemplateError = struct
+      module Type = struct
+        type t =
+          | Template_not_found
+          | Restricted_content
+
+        let of_string = function
+          | "template_not_found" -> Ok Template_not_found
+          | "restricted_content" -> Ok Restricted_content
+          | _ -> Error "Invalid TemplateError format"
+
+        let to_string = function
+          | Template_not_found -> "template_not_found"
+          | Restricted_content -> "restricted_content"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] | `String v -> of_string v
+          | _ -> Error "Invalid TemplateError format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.S (Type)
+
+      let to_string = function
+        | Type.Template_not_found -> "Template not found"
+        | Type.Restricted_content -> "Restricted content"
+    end
+
+    module ListFolderError = struct
+      module Type = struct
+        type t =
+          | Path of LookupError.Type.t
+          | Template_error of TemplateError.Type.t
+
+        let of_yojson v =
+          let sorted = Yojson.Safe.sort v in
+          match sorted with
+          | `Assoc [(".tag", `String "path"); ("path", path)] ->
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
+          | `Assoc [(".tag", `String "template_error"); ("template_error", e)]
+            ->
+            TemplateError.Type.of_yojson e |>? fun e -> Ok (Template_error e)
+          | _ -> Error "Invalid ListFolderError format"
+
+        let to_yojson = function
+          | Path p ->
+            `Assoc
+              [(".tag", `String "path"); ("path", LookupError.Type.to_yojson p)]
+          | Template_error e ->
+            `Assoc
+              [ (".tag", `String "template_error")
+              ; ("template_error", TemplateError.Type.to_yojson e) ]
+      end
+
+      module Json = Json.S (Type)
+
+      let to_string = function
+        | Type.Path p -> LookupError.to_string p
+        | Type.Template_error e -> TemplateError.to_string e
+    end
+
+    module ListFolderContinueArg = struct
+      module Type = struct
+        type t = {cursor : string} [@@deriving yojson]
+      end
+
+      module Json = Json.S (Type)
+    end
+
+    module ListFolderContinueError = struct
+      module Type = struct
+        type t =
+          | Path of LookupError.Type.t
+          | Reset
+
+        let of_yojson v =
+          let sorted = Yojson.Safe.sort v in
+          match sorted with
+          | `Assoc [(".tag", `String "path"); ("path", path)] ->
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
+          | `Assoc [(".tag", `String "reset")] | `String "reset" -> Ok Reset
+          | _ -> Error "Invalid ListFolderError format"
+
+        let to_yojson = function
+          | Path p ->
+            `Assoc
+              [(".tag", `String "path"); ("path", LookupError.Type.to_yojson p)]
+          | Reset -> `String "reset"
+      end
+
+      module Json = Json.S (Type)
+
+      let to_string = function
+        | Type.Path p -> LookupError.to_string p
+        | Type.Reset -> "Reset"
     end
   end
 
@@ -825,24 +1041,57 @@ module S (C : Cohttp_lwt.S.Client) = struct
     Lwt.return_error Error.Not_implemented
 
   (*
-   * List folder.
-   *)
-
-  let list_folder_uri = Root.api "/files/list_folder"
-
-  let list_folder (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
-
-  (*
    * List folder continue.
    *)
 
-  let list_folder_continue_uri = Root.api "/files/list_folder/continue"
+  module ListFolderContinue = struct
+    module Arg = Protocol.ListFolderContinueArg
+    module Result = Protocol.ListFolderResult
+    module Error = Error.S (Protocol.ListFolderContinueError)
 
-  let list_folder_continue (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/list_folder/continue"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let list_folder_continue ~session cursor =
+    let arg = ListFolderContinue.Arg.Type.{cursor} in
+    let headers = Session.headers session in
+    ListFolderContinue.Fn.call ~headers arg
+
+  (*
+   * List folder.
+   *)
+
+  module ListFolder = struct
+    module Arg = Protocol.ListFolderArg
+    module Result = Protocol.ListFolderResult
+    module Error = Error.S (Protocol.ListFolderError)
+
+    module Info = struct
+      let uri = Root.api "/files/list_folder"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let list_folder ~session path =
+    let arg =
+      ListFolder.Arg.Type.
+        { path = (if path = "/" then "" else path)
+        ; recursive = false
+        ; include_media_info = false
+        ; include_deleted = false
+        ; include_has_explicit_shared_members = false
+        ; include_mounted_folders = false
+        ; limit = None
+        ; shared_link = None
+        ; include_property_groups = None
+        ; include_non_downloadable_files = false } in
+    let headers = Session.headers session in
+    ListFolder.Fn.call ~headers arg
 
   (*
    * List folder get latest cursor.

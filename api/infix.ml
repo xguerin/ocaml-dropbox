@@ -1,4 +1,4 @@
-let ( |>=? ) = Result.bind
+let ( |>? ) = Result.bind
 
 let ( >>=? ) m f =
   let open Lwt.Infix in

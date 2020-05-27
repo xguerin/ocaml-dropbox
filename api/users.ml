@@ -211,21 +211,23 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let of_yojson v =
           let sorted = Yojson.Safe.sort v in
           match sorted with
-          | `Assoc [(".tag", `String "team"); ("team", team)] ->
-            TeamRootInfo.Type.of_yojson team |>=? fun team -> Ok (Team team)
-          | `Assoc [(".tag", `String "user"); ("user", user)] ->
-            UserRootInfo.Type.of_yojson user |>=? fun user -> Ok (User user)
+          | `Assoc ((".tag", `String "team") :: tl) ->
+            TeamRootInfo.Type.of_yojson (`Assoc tl)
+            |>? fun team -> Ok (Team team)
+          | `Assoc ((".tag", `String "user") :: tl) ->
+            UserRootInfo.Type.of_yojson (`Assoc tl)
+            |>? fun user -> Ok (User user)
           | _ -> Error "Invalid RootInfo format"
 
         let to_yojson = function
-          | Team team ->
-            `Assoc
-              [ (".tag", `String "team")
-              ; ("team", TeamRootInfo.Type.to_yojson team) ]
-          | User user ->
-            `Assoc
-              [ (".tag", `String "user")
-              ; ("user", UserRootInfo.Type.to_yojson user) ]
+          | Team team -> (
+            match TeamRootInfo.Type.to_yojson team with
+            | `Assoc tl -> `Assoc ((".tag", `String "team") :: tl)
+            | _ -> `Null)
+          | User user -> (
+            match UserRootInfo.Type.to_yojson user with
+            | `Assoc tl -> `Assoc ((".tag", `String "user") :: tl)
+            | _ -> `Null)
       end
     end
 

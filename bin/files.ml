@@ -42,6 +42,32 @@ let get_thumbnail ~session path =
   | Ok () -> Lwt.return ()
   | Error e -> Logs_lwt.err (fun m -> m "%a" Files.GetThumbnail.Error.pp e)
 
+let rec list_folder_continue ~fn ~session cursor =
+  let open Files.ListFolderContinue in
+  let module Error = Files.ListFolderContinue.Error in
+  match%lwt Files.list_folder_continue ~session cursor with
+  | Ok Result.Type.{entries; cursor; has_more} ->
+    let%lwt () = Lwt_list.iter_s fn entries in
+    if has_more then list_folder_continue ~fn ~session cursor else Lwt.return ()
+  | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e)
+
+let list_folder ~session path =
+  let open Files.ListFolder in
+  let module Error = Files.ListFolder.Error in
+  let module Metadata = Files.Protocol.Metadata in
+  let callback = function
+    | Metadata.Type.Deleted {name; _} -> Logs_lwt.app (fun m -> m "x %s" name)
+    | Metadata.Type.File {name; _} -> Logs_lwt.app (fun m -> m "r %s" name)
+    | Metadata.Type.Folder {name; _} -> Logs_lwt.app (fun m -> m "d %s" name)
+  in
+  match%lwt Files.list_folder ~session path with
+  | Ok Result.Type.{entries; cursor; has_more} ->
+    let%lwt () = Lwt_list.iter_s callback entries in
+    if has_more
+    then list_folder_continue ~fn:callback ~session cursor
+    else Lwt.return ()
+  | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e)
+
 let () =
   (*
    * Declare log reporter and level.
@@ -84,5 +110,6 @@ let () =
     | "download" -> download ~session path
     | "download_zip" -> download_zip ~session path
     | "get_thumbnail" -> get_thumbnail ~session path
+    | "list_folder" -> list_folder ~session path
     | _ -> failwith "Invalid command" in
   Lwt_main.run op

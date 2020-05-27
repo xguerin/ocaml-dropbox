@@ -85,15 +85,17 @@ module S (E : Endpoint) : T = struct
       Lwt.return_error Server
     | _ -> Lwt.return_ok (resp, body)
 
-  let pp ppf = function
-    | Access_denied -> Format.pp_print_string ppf "Access denied"
-    | Bad_input_parameter v -> Format.pp_print_string ppf ("Bad input: " ^ v)
-    | Bad_or_expired_token -> Format.pp_print_string ppf "Bad or expired token"
-    | Endpoint {error; _} -> Format.pp_print_string ppf (E.to_string error)
-    | Missing_header -> Format.pp_print_string ppf "Missing header"
-    | Not_implemented -> Format.pp_print_string ppf "Not implemented"
-    | Serdes -> Format.pp_print_string ppf "Serialization error"
-    | Server -> Format.pp_print_string ppf "Server-side error"
-    | Too_many_requests _ -> Format.pp_print_string ppf "Too many requests"
-    | Unknown -> Format.pp_print_string ppf "Unknown error"
+  let to_string = function
+    | Access_denied -> "Access denied"
+    | Bad_input_parameter v -> "Bad input: " ^ v
+    | Bad_or_expired_token -> "Bad or expired token"
+    | Endpoint {error; _} -> E.to_string error
+    | Missing_header -> "Missing header"
+    | Not_implemented -> "Not implemented"
+    | Serdes -> "Serialization error"
+    | Server -> "Server-side error"
+    | Too_many_requests _ -> "Too many requests"
+    | Unknown -> "Unknown error"
+
+  let pp ppf v = Format.pp_print_string ppf (to_string v)
 end
