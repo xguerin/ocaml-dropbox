@@ -306,40 +306,36 @@ module S (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module GetCurrentAccount = struct
-    module Account = Protocol.Account
+    module Result = Protocol.Account
     module Error = Error.S (Error.Void)
 
     module Info = struct
       let uri = Root.api "/users/get_current_account"
     end
 
-    module Fn = Supplier (C) (Account) (Error) (Info)
+    module Fn = Supplier (C) (Result) (Error) (Info)
   end
 
   let get_current_account session =
-    let get_info GetCurrentAccount.Account.Type.{name; _} = Lwt.return_ok name in
     let headers = Session.headers session in
-    GetCurrentAccount.Fn.call ~headers () >>=? get_info
+    GetCurrentAccount.Fn.call ~headers ()
 
   (*
    * Get space usage.
    *)
 
   module GetSpaceUsage = struct
-    module SpaceUsage = Protocol.SpaceUsage
+    module Result = Protocol.SpaceUsage
     module Error = Error.S (Error.Void)
 
     module Info = struct
       let uri = Root.api "/users/get_space_usage"
     end
 
-    module Fn = Supplier (C) (SpaceUsage) (Error) (Info)
+    module Fn = Supplier (C) (Result) (Error) (Info)
   end
 
   let get_space_usage session =
-    let get_info
-        GetSpaceUsage.SpaceUsage.Type.{used; allocation = {allocated; _}} =
-      Lwt.return_ok (used, allocated) in
     let headers = Session.headers session in
-    GetSpaceUsage.Fn.call ~headers () >>=? get_info
+    GetSpaceUsage.Fn.call ~headers ()
 end
