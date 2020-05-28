@@ -26,6 +26,7 @@ module type T = sig
        Response.t * Cohttp_lwt.Body.t
     -> (Response.t * Cohttp_lwt.Body.t, t) result Lwt.t
 
+  val to_string : t -> string
   val pp : Format.formatter -> t -> unit
 end
 

@@ -36,7 +36,7 @@ let () =
   | Some id, Some secret, Some code, None -> (
     let op = Auth.token ~id ~secret code in
     match Lwt_main.run op with
-    | Ok session -> Logs.app (fun m -> m "%a" Session.pp session)
+    | Ok token -> Logs.app (fun m -> m "%s" token)
     | Error err -> Logs.err (fun m -> m "%a" Auth.Token.Error.pp err))
   | None, None, None, Some token -> (
     let session = Session.make token in

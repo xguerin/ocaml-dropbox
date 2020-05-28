@@ -68,7 +68,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
     module Fn = Supplier (C) (Result) (Error) (Info)
   end
 
-  let token ?redirect_uri code ~id ~secret =
+  let token ?redirect_uri ~id ~secret code =
     let q =
       [ ("code", [code])
       ; ("grant_type", ["authorization_code"])
@@ -79,7 +79,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
       | None -> q
       | Some u -> ("redirect_uri", [Uri.to_string u]) :: q in
     let get_info Protocol.Result.Type.{access_token; _} =
-      Lwt.return_ok @@ Session.make access_token in
+      Lwt.return_ok @@ access_token in
     Token.Fn.call ~q () >>=? get_info
 
   (*
@@ -98,5 +98,5 @@ module S (C : Cohttp_lwt.S.Client) = struct
 
   let revoke session =
     let headers = Session.headers session in
-    Revoke.Fn.call ~headers ()
+    Revoke.Fn.call ~headers () >>=? fun _ -> Lwt.return_ok ()
 end
