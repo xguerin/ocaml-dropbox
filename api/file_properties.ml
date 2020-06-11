@@ -1,6 +1,6 @@
 open Endpoint
 
-module S (Client : Cohttp_lwt.S.Client) = struct
+module Make (Client : Cohttp_lwt.S.Client) = struct
   (*
    * Properties add.
    *)

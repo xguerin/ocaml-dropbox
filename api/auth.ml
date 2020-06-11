@@ -2,7 +2,7 @@ open Endpoint
 open RemoteProcedureCall
 open Infix
 
-module S (C : Cohttp_lwt.S.Client) = struct
+module Make (C : Cohttp_lwt.S.Client) = struct
   (*
    * Protocol.
    *)
@@ -19,7 +19,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
   end
 

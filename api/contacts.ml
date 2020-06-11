@@ -1,6 +1,6 @@
 open Endpoint
 
-module S (C : Cohttp_lwt.S.Client) = struct
+module Make (C : Cohttp_lwt.S.Client) = struct
   let delete_manual_contacts_uri = Root.api "/contacts/delete_manual_contacts"
 
   let delete_manual_contacts (_ : Session.Type.t) =

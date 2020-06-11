@@ -4,7 +4,7 @@ open Infix
 open Lwt.Infix
 
 module type Data = sig
-  module Json : Json.T
+  module Json : Json.S
 end
 
 module type Info = sig

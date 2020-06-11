@@ -5,14 +5,14 @@ module type Deriving = sig
   val of_yojson : Yojson.Safe.t -> t Ppx_deriving_yojson_runtime.error_or
 end
 
-module type T = sig
+module type S = sig
   type t
 
   val of_string : string -> t option
   val to_string : t -> string
 end
 
-module S (D : Deriving) : T with type t = D.t = struct
+module Make (D : Deriving) : S with type t = D.t = struct
   type t = D.t
 
   let of_string str =

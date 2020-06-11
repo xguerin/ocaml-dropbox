@@ -2,7 +2,7 @@ open Endpoint
 open RemoteProcedureCall
 open Infix
 
-module S (C : Cohttp_lwt.S.Client) = struct
+module Make (C : Cohttp_lwt.S.Client) = struct
   (*
    * Protocol.
    *)
@@ -19,7 +19,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module SharedFolderMemberPolicy = struct
@@ -43,7 +43,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module SharedFolderJoinPolicy = struct
@@ -69,7 +69,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module SharedLinkCreatePolicy = struct
@@ -98,7 +98,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module TeamSharingPolicies = struct
@@ -110,7 +110,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module OfficeAddinPolicy = struct
@@ -134,7 +134,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FullTeam = struct
@@ -147,7 +147,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module AccountType = struct
@@ -176,7 +176,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module TeamRootInfo = struct
@@ -188,7 +188,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module UserRootInfo = struct
@@ -199,7 +199,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module RootInfo = struct
@@ -251,7 +251,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module SpaceAllocation = struct
@@ -266,7 +266,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module SpaceUsage = struct
@@ -277,7 +277,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
   end
 

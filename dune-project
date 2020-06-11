@@ -4,12 +4,10 @@
 (version 1.0.0)
 (generate_opam_files true)
 
-(homepage https://git.sr.ht/~xguerin/ocaml-dropbox)
-(source (uri git+https://git.sr.ht/~xguerin/ocaml-dropbox))
+(source (github xguerin/ocaml-dropbox))
 (license ISC)
-(authors "Xavier R. Guerin")
-(maintainers "Xavier R. Guerin <srht@applepine.org>")
-(bug_reports "https://todo.sr.ht/~xguerin/ocaml-dropbox")
+(authors "Xavier R. Guérin")
+(maintainers "Xavier R. Guérin <github@applepine.org>")
 
 (package
  (name ocaml-dropbox)

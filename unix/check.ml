@@ -1,1 +1,1 @@
-include Dropbox__Check.S (Cohttp_lwt_unix.Client)
+include Dropbox__Check.Make (Cohttp_lwt_unix.Client)

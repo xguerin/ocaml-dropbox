@@ -2,7 +2,7 @@ open Cohttp
 
 module type Endpoint = sig
   module Type : Json.Deriving
-  module Json : Json.T with type t = Type.t
+  module Json : Json.S with type t = Type.t
 
   val to_string : Type.t -> string
 end
@@ -35,7 +35,7 @@ module Void = struct
     type t = unit [@@deriving yojson]
   end
 
-  module Json = Json.S (Type)
+  module Json = Json.Make (Type)
 
   let to_string _ = ""
 end

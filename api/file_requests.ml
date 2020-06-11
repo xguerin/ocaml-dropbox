@@ -2,7 +2,7 @@ open Endpoint
 open RemoteProcedureCall
 open Infix
 
-module S (C : Cohttp_lwt.S.Client) = struct
+module Make (C : Cohttp_lwt.S.Client) = struct
   (*
    * Protocol.
    *)
@@ -13,7 +13,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         type t = {file_request_count : Int64.t} [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module CountFileRequestError = struct
@@ -30,7 +30,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | Disabled_for_team -> `String "disabled_for_team"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function Type.Disabled_for_team -> "Disabled for team"
     end
@@ -43,7 +43,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let make e =
         Type.
@@ -61,7 +61,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FileRequest = struct
@@ -78,7 +78,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module CreateFileRequestError = struct
@@ -124,7 +124,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.App_lacks_access -> "App lacks access"

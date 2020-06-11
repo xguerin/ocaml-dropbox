@@ -2,11 +2,11 @@
 opam-version: "2.0"
 version: "1.0.0"
 synopsis: "OCaml Dropbox API"
-maintainer: ["Xavier R. Guerin <srht@applepine.org>"]
-authors: ["Xavier R. Guerin"]
+maintainer: ["Xavier R. Guérin <github@applepine.org>"]
+authors: ["Xavier R. Guérin"]
 license: "ISC"
-homepage: "https://git.sr.ht/~xguerin/ocaml-dropbox"
-bug-reports: "https://todo.sr.ht/~xguerin/ocaml-dropbox"
+homepage: "https://github.com/xguerin/ocaml-dropbox"
+bug-reports: "https://github.com/xguerin/ocaml-dropbox/issues"
 depends: [
   "cohttp-lwt-unix" {>= "2.5.1"}
   "dune" {build & > "2.0"}
@@ -26,4 +26,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://git.sr.ht/~xguerin/ocaml-dropbox"
+dev-repo: "git+https://github.com/xguerin/ocaml-dropbox.git"

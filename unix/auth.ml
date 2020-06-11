@@ -1,1 +1,1 @@
-include Dropbox__Auth.S (Cohttp_lwt_unix.Client)
+include Dropbox__Auth.Make (Cohttp_lwt_unix.Client)

@@ -1,6 +1,6 @@
 open Endpoint
 
-module S (C : Cohttp_lwt.S.Client) = struct
+module Make (C : Cohttp_lwt.S.Client) = struct
   let get_metadata_uri = Root.api "/cloud_docs/get_metadata"
 
   let get_metadata (_ : Session.Type.t) =

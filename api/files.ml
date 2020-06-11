@@ -1,7 +1,7 @@
 open Endpoint
 open Infix
 
-module S (C : Cohttp_lwt.S.Client) = struct
+module Make (C : Cohttp_lwt.S.Client) = struct
   (*
    * Protocol.
    *)
@@ -12,7 +12,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         type t = {path : string} [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module LookupError = struct
@@ -80,7 +80,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | Unsupported_file -> `String "unsupported_file"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.Path path -> LookupError.to_string path
@@ -95,7 +95,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module GpsCoordinates = struct
@@ -106,7 +106,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module PhotoMetadata = struct
@@ -118,7 +118,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module VideoMetadata = struct
@@ -131,7 +131,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module MediaMetadata = struct
@@ -160,7 +160,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
             | _ -> `Null)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module MediaInfo = struct
@@ -186,7 +186,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | Pending -> `String "pending"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module SymlinkInfo = struct
@@ -194,7 +194,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         type t = {target : string} [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FileSharingInfo = struct
@@ -206,7 +206,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ExportInfo = struct
@@ -215,7 +215,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module PropertyField = struct
@@ -226,7 +226,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module PropertyGroup = struct
@@ -237,7 +237,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FileLockMetadata = struct
@@ -250,7 +250,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FileMetadata = struct
@@ -276,7 +276,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FolderSharingInfo = struct
@@ -290,7 +290,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module FolderMetadata = struct
@@ -307,7 +307,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module DownloadZipResult = struct
@@ -315,7 +315,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module DownloadZipError = struct
@@ -348,7 +348,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | v -> `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.Path path -> LookupError.to_string path
@@ -365,7 +365,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module PathOrLink = struct
@@ -392,7 +392,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
               ; ("link", SharedLinkFileInfo.Type.to_yojson link) ]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ThumbnailFormat = struct
@@ -414,7 +414,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson = function Jpeg -> `String "jpeg" | Png -> `String "png"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ThumbnailSize = struct
@@ -459,7 +459,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | W2048H1536 -> `String "w2048h1536"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ThumbnailMode = struct
@@ -486,7 +486,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | Fitone_bestfit -> `String "fitone_bestfit"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ThumbnailV2Arg = struct
@@ -499,7 +499,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module MinimalFileLinkMetadata = struct
@@ -512,7 +512,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module PreviewResult = struct
@@ -525,7 +525,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ThumbnailV2Error = struct
@@ -570,7 +570,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | v -> `Assoc [(".tag", `String (to_string v))]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.Access_denied -> "Access denied"
@@ -589,7 +589,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module TemplateFilterBase = struct
@@ -612,7 +612,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | Filter_some v -> `List (List.map (fun e -> `String e) v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ListFolderArg = struct
@@ -633,7 +633,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module DeletedMetadata = struct
@@ -646,7 +646,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module Metadata = struct
@@ -684,7 +684,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
             | _ -> `Null)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ListFolderResult = struct
@@ -696,7 +696,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module TemplateError = struct
@@ -721,7 +721,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         let to_yojson v = `String (to_string v)
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.Template_not_found -> "Template not found"
@@ -754,7 +754,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
               ; ("template_error", TemplateError.Type.to_yojson e) ]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.Path p -> LookupError.to_string p
@@ -766,7 +766,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
         type t = {cursor : string} [@@deriving yojson]
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
     end
 
     module ListFolderContinueError = struct
@@ -790,7 +790,7 @@ module S (C : Cohttp_lwt.S.Client) = struct
           | Reset -> `String "reset"
       end
 
-      module Json = Json.S (Type)
+      module Json = Json.Make (Type)
 
       let to_string = function
         | Type.Path p -> LookupError.to_string p

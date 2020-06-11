@@ -1,1 +1,1 @@
-include Dropbox__Cloud_docs.S (Cohttp_lwt_unix.Client)
+include Dropbox__Cloud_docs.Make (Cohttp_lwt_unix.Client)
