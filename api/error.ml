@@ -17,7 +17,7 @@ module type T = sig
     | Endpoint of endpoint
     | Missing_header
     | Not_implemented
-    | Serdes
+    | Serdes of string
     | Server
     | Too_many_requests of int
     | Unknown
@@ -54,7 +54,7 @@ module S (E : Endpoint) : T = struct
     | Endpoint of endpoint
     | Missing_header
     | Not_implemented
-    | Serdes
+    | Serdes of string
     | Server
     | Too_many_requests of int
     | Unknown
@@ -68,7 +68,7 @@ module S (E : Endpoint) : T = struct
       let%lwt content = Cohttp_lwt.Body.to_string body in
       match Yojson.Safe.from_string content |> endpoint_of_yojson with
       | Ok error -> Lwt.return_error (Endpoint error)
-      | Error _ -> Lwt.return_error Serdes)
+      | Error _ -> Lwt.return_error (Serdes content))
     | Response.{status = `Forbidden; _} -> Lwt.return_error Access_denied
     | Response.{status = `Too_many_requests; headers; _} ->
       let delay =
@@ -93,7 +93,7 @@ module S (E : Endpoint) : T = struct
     | Endpoint {error; _} -> E.to_string error
     | Missing_header -> "Missing header"
     | Not_implemented -> "Not implemented"
-    | Serdes -> "Serialization error"
+    | Serdes c -> "Serialization error: " ^ c
     | Server -> "Server-side error"
     | Too_many_requests _ -> "Too many requests"
     | Unknown -> "Unknown error"

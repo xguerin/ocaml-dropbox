@@ -262,17 +262,17 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; server_modified : string
           ; rev : string
           ; size : Int64.t
-          ; path_lower : (string option[@default None])
-          ; path_display : (string option[@default None])
-          ; media_info : (MediaInfo.Type.t option[@default None])
-          ; symlink_info : (SymlinkInfo.Type.t option[@default None])
-          ; sharing_info : (FileSharingInfo.Type.t option[@default None])
+          ; path_lower : string option [@default None]
+          ; path_display : string option [@default None]
+          ; media_info : MediaInfo.Type.t option [@default None]
+          ; symlink_info : SymlinkInfo.Type.t option [@default None]
+          ; sharing_info : FileSharingInfo.Type.t option [@default None]
           ; is_downloadable : bool
-          ; export_info : (ExportInfo.Type.t option[@default None])
-          ; property_groups : (PropertyGroup.Type.t option[@default None])
-          ; has_explicit_shared_members : (bool option[@default None])
-          ; content_hash : (string option[@default None])
-          ; file_lock_info : (FileLockMetadata.Type.t option[@default None]) }
+          ; export_info : ExportInfo.Type.t option [@default None]
+          ; property_groups : PropertyGroup.Type.t option [@default None]
+          ; has_explicit_shared_members : bool option [@default None]
+          ; content_hash : string option [@default None]
+          ; file_lock_info : FileLockMetadata.Type.t option [@default None] }
         [@@deriving yojson]
       end
 
@@ -687,6 +687,27 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.Make (Type)
     end
 
+    module MetadataV2 = struct
+      module Type = struct
+        type t = Metadata of Metadata.Type.t
+
+        let of_yojson v =
+          let sorted = Yojson.Safe.sort v in
+          match sorted with
+          | `Assoc [(".tag", `String "metadata"); ("metadata", metadata)] ->
+            Metadata.Type.of_yojson metadata |>? fun p -> Ok (Metadata p)
+          | _ -> Error "Invalid MetadataV2 format"
+
+        let to_yojson = function
+          | Metadata metadata -> (
+            match Metadata.Type.to_yojson metadata with
+            | `Assoc tl -> `Assoc ((".tag", `String "metadata") :: tl)
+            | _ -> `Null)
+      end
+
+      module Json = Json.Make (Type)
+    end
+
     module ListFolderResult = struct
       module Type = struct
         type t =
@@ -795,6 +816,189 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       let to_string = function
         | Type.Path p -> LookupError.to_string p
         | Type.Reset -> "Reset"
+    end
+
+    module FileStatus = struct
+      module Type = struct
+        type t =
+          | Active
+          | Deleted
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "active")] | `String "active" -> Ok Active
+          | `Assoc [(".tag", `String "deleted")] | `String "deleted" ->
+            Ok Deleted
+          | _ -> Error "Invalid FileStatus format"
+
+        let to_yojson = function
+          | Active -> `String "active"
+          | Deleted -> `String "deleted"
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module FileCategory = struct
+      module Type = struct
+        type t =
+          | Image
+          | Document
+          | PDF
+          | Spreadsheet
+          | Presentation
+          | Audio
+          | Video
+          | Folder
+          | Paper
+          | Other
+
+        let of_string = function
+          | "image" -> Ok Image
+          | "document" -> Ok Document
+          | "pdf" -> Ok PDF
+          | "spreadsheet" -> Ok Spreadsheet
+          | "presentation" -> Ok Presentation
+          | "audio" -> Ok Audio
+          | "video" -> Ok Video
+          | "folder" -> Ok Folder
+          | "paper" -> Ok Paper
+          | "other" -> Ok Other
+          | _ -> Error "Invalid LookupError format"
+
+        let to_string = function
+          | Image -> "image"
+          | Document -> "document"
+          | PDF -> "pdf"
+          | Spreadsheet -> "spreadsheet"
+          | Presentation -> "presentation"
+          | Audio -> "audio"
+          | Video -> "video"
+          | Folder -> "folder"
+          | Paper -> "paper"
+          | Other -> "other"
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String v)] -> of_string v
+          | `String v -> of_string v
+          | _ -> Error "Invalid LookupError format"
+
+        let to_yojson v = `String (to_string v)
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module SearchMatchFieldOptions = struct
+      module Type = struct
+        type t = {include_highlights : bool} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module SearchOptions = struct
+      module Type = struct
+        type t =
+          { path : string option
+          ; max_results : Int64.t
+          ; file_status : FileStatus.Type.t
+          ; filename_only : bool
+          ; file_extensions : string list option
+          ; file_categories : FileCategory.Type.t list option }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module SearchV2Arg = struct
+      module Type = struct
+        type t =
+          { query : string
+          ; options : SearchOptions.Type.t option
+          ; match_field_options : SearchMatchFieldOptions.Type.t option }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module HighlightSpan = struct
+      module Type = struct
+        type t =
+          { highlight_str : string
+          ; is_highlighted : bool }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module SearchMatchV2 = struct
+      module Type = struct
+        type t =
+          { metadata : MetadataV2.Type.t
+          ; highlight_spans : HighlightSpan.Type.t list option [@default None]
+          }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module SearchV2Result = struct
+      module Type = struct
+        type t =
+          { matches : SearchMatchV2.Type.t list
+          ; has_more : bool
+          ; cursor : string option [@default None] }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module SearchError = struct
+      module Type = struct
+        type t =
+          | Path of LookupError.Type.t
+          | Invalid_argument of string option
+          | Internal_error
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "path"); ("path", path)] ->
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
+          | `Assoc [(".tag", `String "invalid_argument")] ->
+            Ok (Invalid_argument None)
+          | `Assoc
+              [ (".tag", `String "invalid_argument")
+              ; ("invalid_argument", `String v) ] ->
+            Ok (Invalid_argument (Some v))
+          | `Assoc [(".tag", `String "internal_error")]
+          | `String "internal_error" ->
+            Ok Internal_error
+          | _ -> Error "Invalid LookupError format"
+
+        let to_yojson = function
+          | Path p ->
+            let path = LookupError.Type.to_yojson p in
+            `Assoc [(".tag", `String "path"); ("path", path)]
+          | Invalid_argument None ->
+            `Assoc [(".tag", `String "invalid_argument")]
+          | Invalid_argument (Some v) ->
+            `Assoc
+              [ (".tag", `String "invalid_argument")
+              ; ("invalid_argument", `String v) ]
+          | Internal_error -> `String "internal_error"
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Path p -> LookupError.to_string p
+        | Type.Invalid_argument None -> "Invalid argument"
+        | Type.Invalid_argument (Some e) -> "Invalid argument: " ^ e
+        | Type.Internal_error -> "Internal error"
     end
   end
 
@@ -1206,16 +1410,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Lwt.return_error Error.Not_implemented
 
   (*
-   * Search.
-   *)
-
-  let search_uri = Root.api "/files/search_v2"
-
-  let search (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
-
-  (*
    * Search continue.
    *)
 
@@ -1224,6 +1418,39 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let search_continue (_ : Session.Type.t) =
     let module Error = Error.S (Error.Void) in
     Lwt.return_error Error.Not_implemented
+
+  (*
+   * Search.
+   *)
+
+  module Search = struct
+    module Arg = Protocol.SearchV2Arg
+    module Result = Protocol.SearchV2Result
+    module Error = Error.S (Protocol.SearchError)
+
+    module Info = struct
+      let uri = Root.api "/files/search_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let search ?path ~session query =
+    let options =
+      match path with
+      | Some path ->
+        Some
+          Protocol.SearchOptions.Type.
+            { path
+            ; max_results = 100L
+            ; file_status = Protocol.FileStatus.Type.Active
+            ; filename_only = true
+            ; file_extensions = None
+            ; file_categories = Some [Protocol.FileCategory.Type.Image] }
+      | None -> None in
+    let request = Search.Arg.Type.{query; options; match_field_options = None} in
+    let headers = Session.headers session in
+    Search.Fn.call ~headers request
 
   (*
    * Unlock file batch.

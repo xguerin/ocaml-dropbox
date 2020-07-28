@@ -68,6 +68,16 @@ let list_folder ~session path =
     else Lwt.return ()
   | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e)
 
+let search ~session ?path = function
+  | Some query -> (
+    let open Files.Search in
+    let module Error = Files.Search.Error in
+    match%lwt Files.search ~session ~path query with
+    | Ok Result.Type.{matches; _} ->
+      Logs_lwt.info (fun m -> m "%d match(es) found" (List.length matches))
+    | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e))
+  | None -> failwith "The --query option must be set"
+
 let () =
   (*
    * Declare log reporter and level.
@@ -80,11 +90,14 @@ let () =
   let usage = "Usage: files [-z] --token BEARER --path PATH"
   and cmd_opt = ref None
   and tkn_opt = ref None
-  and pth_opt = ref None in
+  and pth_opt = ref None
+  and qry_opt = ref None in
   let specs =
     [ ("--cmd", Arg.String (fun v -> cmd_opt := Some v), "Command")
     ; ("--token", Arg.String (fun v -> tkn_opt := Some v), "User token")
-    ; ("--path", Arg.String (fun v -> pth_opt := Some v), "File path") ] in
+    ; ("--path", Arg.String (fun v -> pth_opt := Some v), "File path")
+    ; ("--query", Arg.String (fun v -> qry_opt := Some v), "Search query") ]
+  in
   Arg.parse specs (fun _ -> ()) usage;
   (*
    * Check arguments.
@@ -111,5 +124,6 @@ let () =
     | "download_zip" -> download_zip ~session path
     | "get_thumbnail" -> get_thumbnail ~session path
     | "list_folder" -> list_folder ~session path
+    | "search" -> search ~session ~path !qry_opt
     | _ -> failwith "Invalid command" in
   Lwt_main.run op
