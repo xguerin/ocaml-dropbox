@@ -112,9 +112,9 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module PhotoMetadata = struct
       module Type = struct
         type t =
-          { dimensions : (Dimensions.Type.t option[@default None])
-          ; location : (Dimensions.Type.t option[@default None])
-          ; time_taken : (string option[@default None]) }
+          { dimensions : Dimensions.Type.t option [@default None]
+          ; location : Dimensions.Type.t option [@default None]
+          ; time_taken : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -124,10 +124,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module VideoMetadata = struct
       module Type = struct
         type t =
-          { dimensions : (Dimensions.Type.t option[@default None])
-          ; location : (Dimensions.Type.t option[@default None])
-          ; time_taken : (string option[@default None])
-          ; duration : (Int64.t option[@default None]) }
+          { dimensions : Dimensions.Type.t option [@default None]
+          ; location : Dimensions.Type.t option [@default None]
+          ; time_taken : string option [@default None]
+          ; duration : Int64.t option [@default None] }
         [@@deriving yojson]
       end
 
@@ -202,7 +202,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { read_only : bool
           ; parent_shared_folder_id : string
-          ; modified_by : (string option[@default None]) }
+          ; modified_by : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -211,8 +211,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module ExportInfo = struct
       module Type = struct
-        type t = {export_as : (string option[@default None])}
-        [@@deriving yojson]
+        type t = {export_as : string option [@default None]} [@@deriving yojson]
       end
 
       module Json = Json.Make (Type)
@@ -243,10 +242,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module FileLockMetadata = struct
       module Type = struct
         type t =
-          { is_lockholder : (bool option[@default None])
-          ; lockholder_name : (string option[@default None])
-          ; lockholder_account_id : (string option[@default None])
-          ; created : (string option[@default None]) }
+          { is_lockholder : bool option [@default None]
+          ; lockholder_name : string option [@default None]
+          ; lockholder_account_id : string option [@default None]
+          ; created : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -283,8 +282,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Type = struct
         type t =
           { read_only : bool
-          ; parent_shared_folder_id : (string option[@default None])
-          ; shared_folder_id : (string option[@default None])
+          ; parent_shared_folder_id : string option [@default None]
+          ; shared_folder_id : string option [@default None]
           ; traverse_only : bool
           ; no_access : bool }
         [@@deriving yojson]
@@ -298,12 +297,12 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { name : string
           ; id : string
-          ; path_lower : (string option[@default None])
-          ; path_display : (string option[@default None])
-          ; parent_shared_folder_id : (string option[@default None])
-          ; shared_folder_id : (string option[@default None])
-          ; sharing_info : (FolderSharingInfo.Type.t option[@default None])
-          ; property_groups : (PropertyGroup.Type.t option[@default None]) }
+          ; path_lower : string option [@default None]
+          ; path_display : string option [@default None]
+          ; parent_shared_folder_id : string option [@default None]
+          ; shared_folder_id : string option [@default None]
+          ; sharing_info : FolderSharingInfo.Type.t option [@default None]
+          ; property_groups : PropertyGroup.Type.t option [@default None] }
         [@@deriving yojson]
       end
 
@@ -360,8 +359,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Type = struct
         type t =
           { url : string
-          ; path : (string option[@default None])
-          ; password : (string option[@default None]) }
+          ; path : string option [@default None]
+          ; password : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -507,8 +506,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { url : string
           ; rev : string
-          ; id : (string option[@default None])
-          ; path : (string option[@default None]) }
+          ; id : string option [@default None]
+          ; path : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -518,10 +517,9 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module PreviewResult = struct
       module Type = struct
         type t =
-          { file_metadata : (FileMetadata.Type.t option[@default None])
-          ; link_metadata :
-              (MinimalFileLinkMetadata.Type.t option
-              [@default None]) }
+          { file_metadata : FileMetadata.Type.t option [@default None]
+          ; link_metadata : MinimalFileLinkMetadata.Type.t option
+                [@default None] }
         [@@deriving yojson]
       end
 
@@ -585,7 +583,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Type = struct
         type t =
           { url : string
-          ; password : (string option[@default None]) }
+          ; password : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -624,11 +622,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; include_deleted : bool
           ; include_has_explicit_shared_members : bool
           ; include_mounted_folders : bool
-          ; limit : (Int32.t option[@default None])
-          ; shared_link : (SharedLink.Type.t option[@default None])
-          ; include_property_groups :
-              (TemplateFilterBase.Type.t option
-              [@default None])
+          ; limit : Int32.t option [@default None]
+          ; shared_link : SharedLink.Type.t option [@default None]
+          ; include_property_groups : TemplateFilterBase.Type.t option
+                [@default None]
           ; include_non_downloadable_files : bool }
         [@@deriving yojson]
       end
@@ -640,9 +637,9 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Type = struct
         type t =
           { name : string
-          ; path_lower : (string option[@default None])
-          ; path_display : (string option[@default None])
-          ; parent_shared_folder_id : (string option[@default None]) }
+          ; path_lower : string option [@default None]
+          ; path_display : string option [@default None]
+          ; parent_shared_folder_id : string option [@default None] }
         [@@deriving yojson]
       end
 
@@ -999,6 +996,14 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         | Type.Invalid_argument None -> "Invalid argument"
         | Type.Invalid_argument (Some e) -> "Invalid argument: " ^ e
         | Type.Internal_error -> "Internal error"
+    end
+
+    module SearchV2ContinueArg = struct
+      module Type = struct
+        type t = {cursor : string} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
     end
   end
 
@@ -1413,11 +1418,22 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Search continue.
    *)
 
-  let search_continue_uri = Root.api "/files/search/continue_v2"
+  module SearchContinue = struct
+    module Arg = Protocol.SearchV2ContinueArg
+    module Result = Protocol.SearchV2Result
+    module Error = Error.S (Protocol.SearchError)
 
-  let search_continue (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/search/continue_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let search_continue ~session cursor =
+    let request = SearchContinue.Arg.Type.{cursor} in
+    let headers = Session.headers session in
+    SearchContinue.Fn.call ~headers request
 
   (*
    * Search.
@@ -1441,7 +1457,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       | Some path ->
         Some
           Protocol.SearchOptions.Type.
-            { path
+            { path = Some path
             ; max_results = 100L
             ; file_status = Protocol.FileStatus.Type.Active
             ; filename_only = true

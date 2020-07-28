@@ -68,13 +68,39 @@ let list_folder ~session path =
     else Lwt.return ()
   | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e)
 
-let search ~session ?path = function
+let rec search_continue ~session cursor =
+  let open Files.SearchContinue in
+  let module Error = Files.SearchContinue.Error in
+  match%lwt Files.search_continue ~session cursor with
+  | Ok Result.Type.{matches; has_more = true; cursor = Some cursor} -> (
+    match%lwt search_continue ~session cursor with
+    | Ok rest -> Lwt.return_ok (matches @ rest)
+    | Error e -> Lwt.return_error e)
+  | Ok Result.Type.{matches; _} -> Lwt.return_ok matches
+  | Error e -> Lwt.return_error e
+
+let display_matches lst =
+  let module Match = Files.Protocol.SearchMatchV2 in
+  let%lwt () =
+    Logs_lwt.info (fun m -> m "%d match(es) found" (List.length lst)) in
+  Lwt_list.iter_s
+    (fun Match.Type.{metadata = Metadata meta; _} ->
+      match meta with
+      | File {path_display = Some path; _} ->
+        Logs_lwt.app (fun m -> m "%s" path)
+      | _ -> Lwt.return ())
+    lst
+
+let search ~session ~path = function
   | Some query -> (
     let open Files.Search in
     let module Error = Files.Search.Error in
-    match%lwt Files.search ~session ~path query with
-    | Ok Result.Type.{matches; _} ->
-      Logs_lwt.info (fun m -> m "%d match(es) found" (List.length matches))
+    match%lwt Files.search ~path ~session query with
+    | Ok Result.Type.{matches; has_more = true; cursor = Some cursor} -> (
+      match%lwt search_continue ~session cursor with
+      | Ok rest -> display_matches (matches @ rest)
+      | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e))
+    | Ok Result.Type.{matches; _} -> display_matches matches
     | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e))
   | None -> failwith "The --query option must be set"
 
