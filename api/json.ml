@@ -8,17 +8,13 @@ end
 module type S = sig
   type t
 
-  val of_string : string -> t option
+  val of_string : string -> (t, string) result
   val to_string : t -> string
 end
 
 module Make (D : Deriving) : S with type t = D.t = struct
   type t = D.t
 
-  let of_string str =
-    match D.of_yojson @@ Yojson.Safe.from_string str with
-    | Ok t -> Some t
-    | Error _ -> None
-
+  let of_string str = D.of_yojson @@ Yojson.Safe.from_string str
   let to_string t = Yojson.Safe.to_string @@ D.to_yojson t
 end
