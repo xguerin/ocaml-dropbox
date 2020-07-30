@@ -548,7 +548,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Access_denied -> "access_denied"
           | Conversion_error -> "conversion_error"
           | Not_found -> "not_found"
-          | Path _ -> "path"
+          | Path e -> "path_" ^ LookupError.Type.to_string e
           | Unsupported_extension -> "unsupported_extension"
           | Unsupported_image -> "unsupported_image"
 
@@ -574,7 +574,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         | Type.Access_denied -> "Access denied"
         | Type.Conversion_error -> "Conversion error"
         | Type.Not_found -> "Not found"
-        | Type.Path v -> LookupError.to_string v
+        | Type.Path v -> "Path error: " ^ LookupError.to_string v
         | Type.Unsupported_extension -> "Unsupported extension"
         | Type.Unsupported_image -> "Unsupported image"
     end

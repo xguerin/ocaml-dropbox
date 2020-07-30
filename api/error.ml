@@ -8,6 +8,7 @@ module type Endpoint = sig
 end
 
 module type T = sig
+  type error
   type endpoint
 
   type t =
@@ -28,6 +29,7 @@ module type T = sig
 
   val to_string : t -> string
   val pp : Format.formatter -> t -> unit
+  val unpack : endpoint -> error
 end
 
 module Void = struct
@@ -40,9 +42,11 @@ module Void = struct
   let to_string _ = ""
 end
 
-module S (E : Endpoint) : T = struct
+module S (E : Endpoint) : T with type error = E.Type.t = struct
+  type error = E.Type.t [@@deriving of_yojson]
+
   type endpoint =
-    { error : E.Type.t
+    { error : error
     ; error_summary : string
     ; user_message : (string option[@default None]) }
   [@@deriving of_yojson]
@@ -99,4 +103,5 @@ module S (E : Endpoint) : T = struct
     | Unknown -> "Unknown error"
 
   let pp ppf v = Format.pp_print_string ppf (to_string v)
+  let unpack {error; _} = error
 end
