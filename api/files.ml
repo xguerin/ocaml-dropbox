@@ -1451,14 +1451,14 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
   end
 
-  let search ?path ~session query =
+  let search ?path ?(max_results = 100L) ~session query =
     let options =
       match path with
       | Some path ->
         Some
           Protocol.SearchOptions.Type.
             { path = Some path
-            ; max_results = 100L
+            ; max_results
             ; file_status = Protocol.FileStatus.Type.Active
             ; filename_only = true
             ; file_extensions = None
