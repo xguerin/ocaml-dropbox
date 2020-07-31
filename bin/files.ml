@@ -2,6 +2,11 @@ open Dropbox.Infix
 open Dropbox_lwt_unix
 open Lwt.Infix
 
+let delete ~session path =
+  match%lwt Files.delete ~session path with
+  | Ok _ -> Lwt.return ()
+  | Error e -> Logs_lwt.err (fun m -> m "%a" Files.Delete.Error.pp e)
+
 let download ~session path =
   let%lwt result =
     Files.download ~session path
@@ -50,6 +55,11 @@ let rec list_folder_continue ~fn ~session cursor =
     let%lwt () = Lwt_list.iter_s fn entries in
     if has_more then list_folder_continue ~fn ~session cursor else Lwt.return ()
   | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e)
+
+let create_folder ~session path =
+  match%lwt Files.create_folder ~session path with
+  | Ok _ -> Lwt.return ()
+  | Error e -> Logs_lwt.err (fun m -> m "%a" Files.CreateFolder.Error.pp e)
 
 let list_folder ~session path =
   let open Files.ListFolder in
@@ -146,9 +156,11 @@ let () =
   let session = Dropbox.Session.make token in
   let op =
     match cmd with
+    | "delete" -> delete ~session path
     | "download" -> download ~session path
     | "download_zip" -> download_zip ~session path
     | "get_thumbnail" -> get_thumbnail ~session path
+    | "create_folder" -> create_folder ~session path
     | "list_folder" -> list_folder ~session path
     | "search" -> search ~session ~path !qry_opt
     | _ -> failwith "Invalid command" in

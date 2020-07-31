@@ -1005,6 +1005,199 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
       module Json = Json.Make (Type)
     end
+
+    module CreateFolderArg = struct
+      module Type = struct
+        type t =
+          { path : string
+          ; autorename : bool }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module CreateFolderResult = struct
+      module Type = struct
+        type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module WriteConflictError = struct
+      module Type = struct
+        type t =
+          | File
+          | Folder
+          | File_ancestor
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "file")] | `String "file" -> Ok File
+          | `Assoc [(".tag", `String "folder")] | `String "folder" -> Ok Folder
+          | `Assoc [(".tag", `String "file_ancestor")] | `String "file_ancestor"
+            ->
+            Ok File_ancestor
+          | _ -> Error "Invalid WriteConflictError format"
+
+        let to_yojson = function
+          | File -> `String "file"
+          | Folder -> `String "folder"
+          | File_ancestor -> `String "file_ancestor"
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.File -> "File"
+        | Type.Folder -> "Folder"
+        | Type.File_ancestor -> "File ancestor"
+    end
+
+    module WriteError = struct
+      module Type = struct
+        type t =
+          | Malformed_path of string option
+          | Conflict of WriteConflictError.Type.t
+          | No_write_permission
+          | Insufficient_space
+          | Disallowed_name
+          | Team_folder
+          | Too_many_write_operations
+
+        let of_yojson = function
+          | `Assoc
+              [ (".tag", `String "malformed_path")
+              ; ("malformed_path", `String path) ] ->
+            Ok (Malformed_path (Some path))
+          | `Assoc [(".tag", `String "malformed_path")]
+          | `String "malformed_path" ->
+            Ok (Malformed_path None)
+          | `Assoc [(".tag", `String "conflict"); ("conflict", conflict)] ->
+            WriteConflictError.Type.of_yojson conflict
+            |>? fun c -> Ok (Conflict c)
+          | `Assoc [(".tag", `String "no_write_permission")]
+          | `String "no_write_permission" ->
+            Ok No_write_permission
+          | `Assoc [(".tag", `String "insufficient_space")]
+          | `String "insufficient_space" ->
+            Ok Insufficient_space
+          | `Assoc [(".tag", `String "disallowed_name")]
+          | `String "disallowed_name" ->
+            Ok Disallowed_name
+          | `Assoc [(".tag", `String "team_folder")] | `String "team_folder" ->
+            Ok Team_folder
+          | `Assoc [(".tag", `String "too_many_write_operations")]
+          | `String "too_many_write_operations" ->
+            Ok Too_many_write_operations
+          | _ -> Error "Invalid WriteError format"
+
+        let to_yojson = function
+          | Malformed_path (Some p) ->
+            `Assoc [(".tag", `String "malformed_path"); ("path", `String p)]
+          | Malformed_path None -> `String "malformed_path"
+          | Conflict c ->
+            let conflict = WriteConflictError.Type.to_yojson c in
+            `Assoc [(".tag", `String "conflict"); ("conflict", conflict)]
+          | No_write_permission -> `String "no_write_permission"
+          | Insufficient_space -> `String "insufficient_space"
+          | Disallowed_name -> `String "disallowed_name"
+          | Team_folder -> `String "team_folder"
+          | Too_many_write_operations -> `String "too_many_write_operations"
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Malformed_path (Some p) -> "Malformed path: " ^ p
+        | Type.Malformed_path None -> "Malformed path"
+        | Type.Conflict c -> WriteConflictError.to_string c ^ " already exists"
+        | Type.No_write_permission -> "No write permission"
+        | Type.Insufficient_space -> "Insufficient space"
+        | Type.Disallowed_name -> "Disallowed name"
+        | Type.Team_folder -> "Team folder"
+        | Type.Too_many_write_operations -> "Too many write operations"
+    end
+
+    module CreateFolderError = struct
+      module Type = struct
+        type t = Path of WriteError.Type.t
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "path"); ("path", path)] ->
+            WriteError.Type.of_yojson path |>? fun p -> Ok (Path p)
+          | _ -> Error "Invalid LookupError format"
+
+        let to_yojson = function
+          | Path p ->
+            let path = WriteError.Type.to_yojson p in
+            `Assoc [(".tag", `String "path"); ("path", path)]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function Type.Path p -> WriteError.to_string p
+    end
+
+    module DeleteArg = struct
+      module Type = struct
+        type t =
+          { path : string
+          ; parent_rev : string option }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module DeleteResult = struct
+      module Type = struct
+        type t = {metadata : Metadata.Type.t} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module DeleteError = struct
+      module Type = struct
+        type t =
+          | Path_lookup of LookupError.Type.t
+          | Path_write of WriteError.Type.t
+          | Too_many_write_operations
+          | Too_many_files
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "path_lookup"); ("path_lookup", path)] ->
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path_lookup p)
+          | `Assoc [(".tag", `String "path_write"); ("path_write", path)] ->
+            WriteError.Type.of_yojson path |>? fun c -> Ok (Path_write c)
+          | `Assoc [(".tag", `String "too_many_write_operations")]
+          | `String "too_many_write_operations" ->
+            Ok Too_many_write_operations
+          | `Assoc [(".tag", `String "too_many_files")]
+          | `String "too_many_files" ->
+            Ok Too_many_files
+          | _ -> Error "Invalid WriteError format"
+
+        let to_yojson = function
+          | Path_lookup p ->
+            let p = LookupError.Type.to_yojson p in
+            `Assoc [(".tag", `String "path_lookup"); ("path_lookup", p)]
+          | Path_write p ->
+            let p = WriteError.Type.to_yojson p in
+            `Assoc [(".tag", `String "path_write"); ("path_write", p)]
+          | Too_many_write_operations -> `String "too_many_write_operations"
+          | Too_many_files -> `String "too_many_files"
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Path_lookup p -> LookupError.to_string p
+        | Type.Path_write p -> WriteError.to_string p
+        | Type.Too_many_write_operations -> "Too many write operations"
+        | Type.Too_many_files -> "Too many files"
+    end
   end
 
   (*
@@ -1060,11 +1253,23 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   (*
    * Create folder.
    *)
-  let create_folder_uri = Root.api "/files/create_folder_v2"
 
-  let create_folder (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+  module CreateFolder = struct
+    module Arg = Protocol.CreateFolderArg
+    module Result = Protocol.CreateFolderResult
+    module Error = Error.S (Protocol.CreateFolderError)
+
+    module Info = struct
+      let uri = Root.api "/files/create_folder_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let create_folder ~session path =
+    let request = CreateFolder.Arg.Type.{path; autorename = false} in
+    let headers = Session.headers session in
+    CreateFolder.Fn.call ~headers request
 
   (*
    * Create folder batch.
@@ -1091,11 +1296,22 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Delete.
    *)
 
-  let delete_uri = Root.api "/files/delete_v2"
+  module Delete = struct
+    module Arg = Protocol.DeleteArg
+    module Result = Protocol.DeleteResult
+    module Error = Error.S (Protocol.DeleteError)
 
-  let delete (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/delete_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let delete ~session path =
+    let request = Delete.Arg.Type.{path; parent_rev = None} in
+    let headers = Session.headers session in
+    Delete.Fn.call ~headers request
 
   (*
    * Delete batch.
