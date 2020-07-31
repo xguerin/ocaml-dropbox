@@ -1198,17 +1198,187 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         | Type.Too_many_write_operations -> "Too many write operations"
         | Type.Too_many_files -> "Too many files"
     end
+
+    module RelocationArg = struct
+      module Type = struct
+        type t =
+          { from_path : string
+          ; to_path : string
+          ; allow_shared_folder : bool
+          ; autorename : bool
+          ; allow_ownership_transfer : bool }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module RelocationResult = struct
+      module Type = struct
+        type t = {metadata : Metadata.Type.t} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module RelocationError = struct
+      module Type = struct
+        type t =
+          | From_lookup of LookupError.Type.t
+          | From_write of WriteError.Type.t
+          | To of WriteError.Type.t
+          | Cant_copy_shared_folder
+          | Cant_nest_shared_folder
+          | Cant_move_folder_into_itself
+          | Too_many_files
+          | Duplicated_or_nested_paths
+          | Cant_transfer_ownership
+          | Insufficient_quota
+          | Internal_error
+          | Cant_move_shared_folder
+          | Cant_move_into_vault
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "from_lookup"); ("from_lookup", path)] ->
+            LookupError.Type.of_yojson path |>? fun p -> Ok (From_lookup p)
+          | `Assoc [(".tag", `String "from_write"); ("from_write", path)] ->
+            WriteError.Type.of_yojson path |>? fun c -> Ok (From_write c)
+          | `Assoc [(".tag", `String "to"); ("to", path)] ->
+            WriteError.Type.of_yojson path |>? fun c -> Ok (To c)
+          | `Assoc [(".tag", `String "cant_copy_shared_folder")]
+          | `String "cant_copy_shared_folder" ->
+            Ok Cant_copy_shared_folder
+          | `Assoc [(".tag", `String "cant_nest_shared_folder")]
+          | `String "cant_nest_shared_folder" ->
+            Ok Cant_nest_shared_folder
+          | `Assoc [(".tag", `String "cant_move_folder_into_itself")]
+          | `String "cant_move_folder_into_itself" ->
+            Ok Cant_move_folder_into_itself
+          | `Assoc [(".tag", `String "too_many_files")]
+          | `String "too_many_files" ->
+            Ok Too_many_files
+          | `Assoc [(".tag", `String "duplicated_or_nested_paths")]
+          | `String "duplicated_or_nested_paths" ->
+            Ok Duplicated_or_nested_paths
+          | `Assoc [(".tag", `String "cant_transfer_ownership")]
+          | `String "cant_transfer_ownership" ->
+            Ok Cant_transfer_ownership
+          | `Assoc [(".tag", `String "insufficient_quota")]
+          | `String "insufficient_quota" ->
+            Ok Insufficient_quota
+          | `Assoc [(".tag", `String "internal_error")]
+          | `String "internal_error" ->
+            Ok Internal_error
+          | `Assoc [(".tag", `String "cant_move_shared_folder")]
+          | `String "cant_move_shared_folder" ->
+            Ok Cant_move_shared_folder
+          | `Assoc [(".tag", `String "cant_move_into_vault")]
+          | `String "cant_move_into_vault" ->
+            Ok Cant_move_into_vault
+          | _ -> Error "Invalid WriteError format"
+
+        let to_yojson = function
+          | From_lookup p ->
+            let p = LookupError.Type.to_yojson p in
+            `Assoc [(".tag", `String "from_lookup"); ("from_lookup", p)]
+          | From_write p ->
+            let p = WriteError.Type.to_yojson p in
+            `Assoc [(".tag", `String "from_write"); ("from_write", p)]
+          | To p ->
+            let p = WriteError.Type.to_yojson p in
+            `Assoc [(".tag", `String "to"); ("to", p)]
+          | Cant_copy_shared_folder -> `String "cant_copy_shared_folder"
+          | Cant_nest_shared_folder -> `String "cant_nest_shared_folder"
+          | Cant_move_folder_into_itself ->
+            `String "cant_move_folder_into_itself"
+          | Too_many_files -> `String "too_many_files"
+          | Insufficient_quota -> `String "insufficient_quota"
+          | Duplicated_or_nested_paths -> `String "duplicated_or_nested_paths"
+          | Cant_transfer_ownership -> `String "cant_transfer_ownership"
+          | Internal_error -> `String "internal_error"
+          | Cant_move_shared_folder -> `String "cant_move_shared_folder"
+          | Cant_move_into_vault -> `String "cant_move_into_vault"
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.From_lookup p -> LookupError.to_string p
+        | Type.From_write p -> WriteError.to_string p
+        | Type.To p -> WriteError.to_string p
+        | Type.Cant_copy_shared_folder -> "Can't copy shared folder"
+        | Type.Cant_nest_shared_folder -> "Can't nest shared folder"
+        | Type.Cant_move_folder_into_itself -> "Can't move folder into itself"
+        | Type.Too_many_files -> "Too many files"
+        | Type.Insufficient_quota -> "Insufficient quota"
+        | Type.Duplicated_or_nested_paths -> "Duplicated or nested paths"
+        | Type.Cant_transfer_ownership -> "Can't transfer ownership"
+        | Type.Internal_error -> "Internal error"
+        | Type.Cant_move_shared_folder -> "Can't move shared folder"
+        | Type.Cant_move_into_vault -> "Can't move into vault"
+    end
+
+    module GetMetadataArg = struct
+      module Type = struct
+        type t =
+          { path : string
+          ; include_media_info : bool
+          ; include_deleted : bool
+          ; include_has_explicit_shared_members : bool
+          ; include_property_groups : TemplateFilterBase.Type.t option }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module GetMetadataError = struct
+      module Type = struct
+        type t = Path of LookupError.Type.t
+
+        let of_yojson = function
+          | `Assoc [(".tag", `String "path"); ("path", path)] ->
+            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
+          | _ -> Error "Invalid WriteError format"
+
+        let to_yojson = function
+          | Path p ->
+            let p = LookupError.Type.to_yojson p in
+            `Assoc [(".tag", `String "path"); ("path", p)]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function Type.Path p -> LookupError.to_string p
+    end
   end
 
   (*
    * Copy.
    *)
 
-  let copy_uri = Root.api "/files/copy_v2"
+  module Copy = struct
+    module Arg = Protocol.RelocationArg
+    module Result = Protocol.RelocationResult
+    module Error = Error.S (Protocol.RelocationError)
 
-  let copy (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/copy_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let copy ~session from_path to_path =
+    let request =
+      Copy.Arg.Type.
+        { from_path
+        ; to_path
+        ; allow_shared_folder = false
+        ; autorename = false
+        ; allow_ownership_transfer = false } in
+    let headers = Session.headers session in
+    Copy.Fn.call ~headers request
 
   (*
    * Copy batch.
@@ -1397,11 +1567,28 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Get metadata.
    *)
 
-  let get_metadata_uri = Root.api "/files/get_metadata"
+  module GetMetadata = struct
+    module Arg = Protocol.GetMetadataArg
+    module Result = Protocol.Metadata
+    module Error = Error.S (Protocol.GetMetadataError)
 
-  let get_metadata (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/get_metadata"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_metadata ~session path =
+    let arg =
+      GetMetadata.Arg.Type.
+        { path = (if path = "/" then "" else path)
+        ; include_media_info = false
+        ; include_deleted = false
+        ; include_has_explicit_shared_members = false
+        ; include_property_groups = None } in
+    let headers = Session.headers session in
+    GetMetadata.Fn.call ~headers arg
 
   (*
    * Get preview.

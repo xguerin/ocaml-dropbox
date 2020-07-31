@@ -2,6 +2,13 @@ open Dropbox.Infix
 open Dropbox_lwt_unix
 open Lwt.Infix
 
+let copy ~session path = function
+  | Some target -> (
+    match%lwt Files.copy ~session path target with
+    | Ok _ -> Lwt.return ()
+    | Error e -> Logs_lwt.err (fun m -> m "%a" Files.Copy.Error.pp e))
+  | None -> failwith "The --target option must be set"
+
 let delete ~session path =
   match%lwt Files.delete ~session path with
   | Ok _ -> Lwt.return ()
@@ -30,6 +37,16 @@ let download_zip ~session path =
   match result with
   | Ok () -> Lwt.return ()
   | Error e -> Logs_lwt.err (fun m -> m "%a" Files.DownloadZip.Error.pp e)
+
+let get_metadata ~session path =
+  match%lwt Files.get_metadata ~session path with
+  | Ok metadata -> (
+    Files.GetMetadata.Result.(
+      match metadata with
+      | Type.Deleted _ -> Logs_lwt.info (fun m -> m "Deleted")
+      | Type.File _ -> Logs_lwt.info (fun m -> m "File")
+      | Type.Folder _ -> Logs_lwt.info (fun m -> m "Folder")))
+  | Error e -> Logs_lwt.err (fun m -> m "%a" Files.GetMetadata.Error.pp e)
 
 let get_thumbnail ~session path =
   let%lwt result =
@@ -127,12 +144,14 @@ let () =
   and cmd_opt = ref None
   and tkn_opt = ref None
   and pth_opt = ref None
-  and qry_opt = ref None in
+  and qry_opt = ref None
+  and tgt_opt = ref None in
   let specs =
     [ ("--cmd", Arg.String (fun v -> cmd_opt := Some v), "Command")
     ; ("--token", Arg.String (fun v -> tkn_opt := Some v), "User token")
     ; ("--path", Arg.String (fun v -> pth_opt := Some v), "File path")
-    ; ("--query", Arg.String (fun v -> qry_opt := Some v), "Search query") ]
+    ; ("--query", Arg.String (fun v -> qry_opt := Some v), "Search query")
+    ; ("--target", Arg.String (fun v -> tgt_opt := Some v), "File target") ]
   in
   Arg.parse specs (fun _ -> ()) usage;
   (*
@@ -156,9 +175,11 @@ let () =
   let session = Dropbox.Session.make token in
   let op =
     match cmd with
+    | "copy" -> copy ~session path !tgt_opt
     | "delete" -> delete ~session path
     | "download" -> download ~session path
     | "download_zip" -> download_zip ~session path
+    | "get_metadata" -> get_metadata ~session path
     | "get_thumbnail" -> get_thumbnail ~session path
     | "create_folder" -> create_folder ~session path
     | "list_folder" -> list_folder ~session path
