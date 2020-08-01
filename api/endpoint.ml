@@ -22,7 +22,9 @@ module ContentDownload = struct
     let deserialize v =
       match O.Json.of_string v with
       | Ok o -> Lwt.return_ok o
-      | Error e -> Lwt.return_error (R.Serdes e)
+      | Error e ->
+        let%lwt () = Logs_lwt.err (fun m -> m "%s" v) in
+        Lwt.return_error (R.Serdes e)
 
     let call ?(headers = Header.init ()) ?q v =
       let content = I.Json.to_string v in
@@ -45,7 +47,9 @@ module RemoteProcedureCall = struct
     let deserialize v =
       match O.Json.of_string v with
       | Ok o -> Lwt.return_ok o
-      | Error e -> Lwt.return_error (R.Serdes e)
+      | Error e ->
+        let%lwt () = Logs_lwt.err (fun m -> m "%s" v) in
+        Lwt.return_error (R.Serdes e)
 
     let call ?(headers = Header.init ()) ?q v =
       let headers = Header.add headers "Content-Type" "application/json" in
@@ -61,7 +65,9 @@ module RemoteProcedureCall = struct
     let deserialize v =
       match O.Json.of_string v with
       | Ok o -> Lwt.return_ok o
-      | Error e -> Lwt.return_error (R.Serdes e)
+      | Error e ->
+        let%lwt () = Logs_lwt.err (fun m -> m "%s" v) in
+        Lwt.return_error (R.Serdes e)
 
     let call ?(headers = Header.init ()) ?q () =
       let uri =

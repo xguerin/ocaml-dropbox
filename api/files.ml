@@ -263,6 +263,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; size : Int64.t
           ; path_lower : string option [@default None]
           ; path_display : string option [@default None]
+          ; parent_shared_folder_id : string option [@default None]
           ; media_info : MediaInfo.Type.t option [@default None]
           ; symlink_info : SymlinkInfo.Type.t option [@default None]
           ; sharing_info : FileSharingInfo.Type.t option [@default None]
