@@ -1,5 +1,4 @@
 open Endpoint
-open Infix
 
 module Make (C : Cohttp_lwt.S.Client) = struct
   (*
@@ -24,30 +23,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Not_found
           | Restricted_content
           | Unsupported_content_type
-
-        let of_string = function
-          | "malformed_path" -> Ok Malformed_path
-          | "not_found" -> Ok Not_found
-          | "not_file" -> Ok Not_file
-          | "not_folder" -> Ok Not_folder
-          | "restricted_content" -> Ok Restricted_content
-          | "unsupported_content_type" -> Ok Unsupported_content_type
-          | _ -> Error "Invalid LookupError format"
-
-        let to_string = function
-          | Malformed_path -> "malformed_path"
-          | Not_found -> "not_found"
-          | Not_file -> "not_file"
-          | Not_folder -> "not_folder"
-          | Restricted_content -> "restricted_content"
-          | Unsupported_content_type -> "unsupported_content_type"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid LookupError format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       let to_string = function
@@ -64,20 +40,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Path of LookupError.Type.t
           | Unsupported_file
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun path -> Ok (Path path)
-          | `Assoc [(".tag", `String "unsupported_file")]
-          | `String "unsupported_file" ->
-            Ok Unsupported_file
-          | _ -> Error "Invalid DownloadError format"
-
-        let to_yojson = function
-          | Path path -> `Assoc [(".tag", LookupError.Type.to_yojson path)]
-          | Unsupported_file -> `String "unsupported_file"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -139,25 +102,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Photo of PhotoMetadata.Type.t
           | Video of VideoMetadata.Type.t
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc ((".tag", `String "photo") :: tl) ->
-            PhotoMetadata.Type.of_yojson (`Assoc tl) |>? fun p -> Ok (Photo p)
-          | `Assoc ((".tag", `String "video") :: tl) ->
-            VideoMetadata.Type.of_yojson (`Assoc tl) |>? fun v -> Ok (Video v)
-          | _ -> Error "Invalid MediaMetadata format"
-
-        let to_yojson = function
-          | Photo photo -> (
-            match PhotoMetadata.Type.to_yojson photo with
-            | `Assoc tl -> `Assoc ((".tag", `String "photo") :: tl)
-            | _ -> `Null)
-          | Video video -> (
-            match VideoMetadata.Type.to_yojson video with
-            | `Assoc tl -> `Assoc ((".tag", `String "video") :: tl)
-            | _ -> `Null)
+        [@@deriving dropbox {mode = SubType}]
       end
 
       module Json = Json.Make (Type)
@@ -168,22 +113,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Metadata of MediaMetadata.Type.t
           | Pending
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "metadata"); ("metadata", metadata)] ->
-            MediaMetadata.Type.of_yojson metadata |>? fun m -> Ok (Metadata m)
-          | `Assoc [(".tag", `String "pending")] | `String "pending" ->
-            Ok Pending
-          | _ -> Error "Invalid MediaInfo format"
-
-        let to_yojson = function
-          | Metadata metadata ->
-            `Assoc
-              [ (".tag", `String "metadata")
-              ; ("metadata", MediaMetadata.Type.to_yojson metadata) ]
-          | Pending -> `String "pending"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -324,28 +254,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Path of LookupError.Type.t
           | Too_large
           | Too_many_files
-
-        let of_string = function
-          | "too_large" -> Ok Too_large
-          | "too_many_files" -> Ok Too_many_files
-          | _ -> Error "Invalid DownloadZipError format"
-
-        let to_string = function
-          | Path _ -> "path"
-          | Too_large -> "too_large"
-          | Too_many_files -> "too_many_files"
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | `Assoc [(".tag", `String v)] | `String v -> of_string v
-          | _ -> Error "Invalid DownloadZipError format"
-
-        let to_yojson = function
-          | Path path -> `Assoc [(".tag", LookupError.Type.to_yojson path)]
-          | v -> `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -373,23 +282,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Path of string
           | Link of SharedLinkFileInfo.Type.t
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "path"); ("path", `String path)] ->
-            Ok (Path path)
-          | `Assoc [(".tag", `String "link"); ("link", link)] ->
-            SharedLinkFileInfo.Type.of_yojson link |>? fun l -> Ok (Link l)
-          | _ -> Error "Invalid PathOrLink format"
-
-        let to_yojson = function
-          | Path path ->
-            `Assoc [(".tag", `String "path"); ("path", `String path)]
-          | Link link ->
-            `Assoc
-              [ (".tag", `String "link")
-              ; ("link", SharedLinkFileInfo.Type.to_yojson link) ]
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -400,18 +293,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Jpeg
           | Png
-
-        let of_string = function
-          | "jpeg" -> Ok Jpeg
-          | "png" -> Ok Png
-          | _ -> Error "Invalid ThumbnailFormat format"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String value)] -> of_string value
-          | `String value -> of_string value
-          | _ -> Error "Invalid ThumbnailFormat format"
-
-        let to_yojson = function Jpeg -> `String "jpeg" | Png -> `String "png"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -429,34 +311,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | W960H640
           | W1024H768
           | W2048H1536
-
-        let of_string = function
-          | "w32h32" -> Ok W32H32
-          | "w64h64" -> Ok W64H64
-          | "w128h128" -> Ok W128H128
-          | "w256h256" -> Ok W256H256
-          | "w480h320" -> Ok W480H320
-          | "w640h480" -> Ok W640H480
-          | "w960h640" -> Ok W960H640
-          | "w1024h768" -> Ok W1024H768
-          | "w2048h1536" -> Ok W2048H1536
-          | _ -> Error "Invalid ThumbnailSize format"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String value)] -> of_string value
-          | `String value -> of_string value
-          | _ -> Error "Invalid ThumbnailSize format"
-
-        let to_yojson = function
-          | W32H32 -> `String "w32h32"
-          | W64H64 -> `String "w64h64"
-          | W128H128 -> `String "w128h128"
-          | W256H256 -> `String "w256h256"
-          | W480H320 -> `String "w480h320"
-          | W640H480 -> `String "w640h480"
-          | W960H640 -> `String "w960h640"
-          | W1024H768 -> `String "w1024h768"
-          | W2048H1536 -> `String "w2048h1536"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -468,22 +323,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Strict
           | Bestfit
           | Fitone_bestfit
-
-        let of_string = function
-          | "strict" -> Ok Strict
-          | "bestfit" -> Ok Bestfit
-          | "fitone_bestfit" -> Ok Fitone_bestfit
-          | _ -> Error "Invalid ThumbnailMode format"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String value)] -> of_string value
-          | `String value -> of_string value
-          | _ -> Error "Invalid ThumbnailMode format"
-
-        let to_yojson = function
-          | Strict -> `String "strict"
-          | Bestfit -> `String "bestfit"
-          | Fitone_bestfit -> `String "fitone_bestfit"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -536,37 +376,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Path of LookupError.Type.t
           | Unsupported_extension
           | Unsupported_image
-
-        let of_string = function
-          | "access_denied" -> Ok Access_denied
-          | "conversion_error" -> Ok Conversion_error
-          | "not_found" -> Ok Not_found
-          | "unsupported_extension" -> Ok Unsupported_extension
-          | "unsupported_image" -> Ok Unsupported_image
-          | _ -> Error "Invalid ThumbnailV2Error format"
-
-        let to_string = function
-          | Access_denied -> "access_denied"
-          | Conversion_error -> "conversion_error"
-          | Not_found -> "not_found"
-          | Path e -> "path_" ^ LookupError.Type.to_string e
-          | Unsupported_extension -> "unsupported_extension"
-          | Unsupported_image -> "unsupported_image"
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String value)] -> of_string value
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | _ -> Error "Invalid ThumbnailV2Error format"
-
-        let to_yojson = function
-          | Path path ->
-            `Assoc
-              [ (".tag", `String "path")
-              ; ("path", LookupError.Type.to_yojson path) ]
-          | v -> `Assoc [(".tag", `String (to_string v))]
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -593,22 +403,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module TemplateFilterBase = struct
       module Type = struct
-        type t = Filter_some of string list
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "filter_some"); ("filter_some", `List v)]
-            ->
-            let result =
-              List.fold_right
-                (fun e acc -> match e with `String v -> v :: acc | _ -> acc)
-                v [] in
-            Ok (Filter_some result)
-          | _ -> Error "Invalid Filter_some format"
-
-        let to_yojson = function
-          | Filter_some v -> `List (List.map (fun e -> `String e) v)
+        type t = Filter_some of string list [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -653,33 +448,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Deleted of DeletedMetadata.Type.t
           | File of FileMetadata.Type.t
           | Folder of FolderMetadata.Type.t
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc ((".tag", `String "deleted") :: deleted) ->
-            DeletedMetadata.Type.of_yojson (`Assoc deleted)
-            |>? fun d -> Ok (Deleted d)
-          | `Assoc ((".tag", `String "file") :: file) ->
-            FileMetadata.Type.of_yojson (`Assoc file) |>? fun f -> Ok (File f)
-          | `Assoc ((".tag", `String "folder") :: folder) ->
-            FolderMetadata.Type.of_yojson (`Assoc folder)
-            |>? fun f -> Ok (Folder f)
-          | _ -> Error "Invalid Metadata format"
-
-        let to_yojson = function
-          | Deleted d -> (
-            match DeletedMetadata.Type.to_yojson d with
-            | `Assoc tl -> `Assoc ((".tag", `String "deleted") :: tl)
-            | _ -> `Null)
-          | File f -> (
-            match FileMetadata.Type.to_yojson f with
-            | `Assoc tl -> `Assoc ((".tag", `String "file") :: tl)
-            | _ -> `Null)
-          | Folder f -> (
-            match FolderMetadata.Type.to_yojson f with
-            | `Assoc tl -> `Assoc ((".tag", `String "folder") :: tl)
-            | _ -> `Null)
+        [@@deriving dropbox {mode = SubType}]
       end
 
       module Json = Json.Make (Type)
@@ -687,20 +456,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module MetadataV2 = struct
       module Type = struct
-        type t = Metadata of Metadata.Type.t
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "metadata"); ("metadata", metadata)] ->
-            Metadata.Type.of_yojson metadata |>? fun p -> Ok (Metadata p)
-          | _ -> Error "Invalid MetadataV2 format"
-
-        let to_yojson = function
-          | Metadata metadata -> (
-            match Metadata.Type.to_yojson metadata with
-            | `Assoc tl -> `Assoc ((".tag", `String "metadata") :: tl)
-            | _ -> `Null)
+        type t = Metadata of Metadata.Type.t [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -723,21 +479,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Template_not_found
           | Restricted_content
-
-        let of_string = function
-          | "template_not_found" -> Ok Template_not_found
-          | "restricted_content" -> Ok Restricted_content
-          | _ -> Error "Invalid TemplateError format"
-
-        let to_string = function
-          | Template_not_found -> "template_not_found"
-          | Restricted_content -> "restricted_content"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] | `String v -> of_string v
-          | _ -> Error "Invalid TemplateError format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -752,25 +494,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Path of LookupError.Type.t
           | Template_error of TemplateError.Type.t
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | `Assoc [(".tag", `String "template_error"); ("template_error", e)]
-            ->
-            TemplateError.Type.of_yojson e |>? fun e -> Ok (Template_error e)
-          | _ -> Error "Invalid ListFolderError format"
-
-        let to_yojson = function
-          | Path p ->
-            `Assoc
-              [(".tag", `String "path"); ("path", LookupError.Type.to_yojson p)]
-          | Template_error e ->
-            `Assoc
-              [ (".tag", `String "template_error")
-              ; ("template_error", TemplateError.Type.to_yojson e) ]
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -793,20 +517,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Path of LookupError.Type.t
           | Reset
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | `Assoc [(".tag", `String "reset")] | `String "reset" -> Ok Reset
-          | _ -> Error "Invalid ListFolderError format"
-
-        let to_yojson = function
-          | Path p ->
-            `Assoc
-              [(".tag", `String "path"); ("path", LookupError.Type.to_yojson p)]
-          | Reset -> `String "reset"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -821,16 +532,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Active
           | Deleted
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "active")] | `String "active" -> Ok Active
-          | `Assoc [(".tag", `String "deleted")] | `String "deleted" ->
-            Ok Deleted
-          | _ -> Error "Invalid FileStatus format"
-
-        let to_yojson = function
-          | Active -> `String "active"
-          | Deleted -> `String "deleted"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -849,38 +551,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Folder
           | Paper
           | Other
-
-        let of_string = function
-          | "image" -> Ok Image
-          | "document" -> Ok Document
-          | "pdf" -> Ok PDF
-          | "spreadsheet" -> Ok Spreadsheet
-          | "presentation" -> Ok Presentation
-          | "audio" -> Ok Audio
-          | "video" -> Ok Video
-          | "folder" -> Ok Folder
-          | "paper" -> Ok Paper
-          | "other" -> Ok Other
-          | _ -> Error "Invalid LookupError format"
-
-        let to_string = function
-          | Image -> "image"
-          | Document -> "document"
-          | PDF -> "pdf"
-          | Spreadsheet -> "spreadsheet"
-          | Presentation -> "presentation"
-          | Audio -> "audio"
-          | Video -> "video"
-          | Folder -> "folder"
-          | Paper -> "paper"
-          | Other -> "other"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid LookupError format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -962,32 +633,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Path of LookupError.Type.t
           | Invalid_argument of string option
           | Internal_error
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | `Assoc [(".tag", `String "invalid_argument")] ->
-            Ok (Invalid_argument None)
-          | `Assoc
-              [ (".tag", `String "invalid_argument")
-              ; ("invalid_argument", `String v) ] ->
-            Ok (Invalid_argument (Some v))
-          | `Assoc [(".tag", `String "internal_error")]
-          | `String "internal_error" ->
-            Ok Internal_error
-          | _ -> Error "Invalid LookupError format"
-
-        let to_yojson = function
-          | Path p ->
-            let path = LookupError.Type.to_yojson p in
-            `Assoc [(".tag", `String "path"); ("path", path)]
-          | Invalid_argument None ->
-            `Assoc [(".tag", `String "invalid_argument")]
-          | Invalid_argument (Some v) ->
-            `Assoc
-              [ (".tag", `String "invalid_argument")
-              ; ("invalid_argument", `String v) ]
-          | Internal_error -> `String "internal_error"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -1032,19 +678,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | File
           | Folder
           | File_ancestor
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "file")] | `String "file" -> Ok File
-          | `Assoc [(".tag", `String "folder")] | `String "folder" -> Ok Folder
-          | `Assoc [(".tag", `String "file_ancestor")] | `String "file_ancestor"
-            ->
-            Ok File_ancestor
-          | _ -> Error "Invalid WriteConflictError format"
-
-        let to_yojson = function
-          | File -> `String "file"
-          | Folder -> `String "folder"
-          | File_ancestor -> `String "file_ancestor"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -1065,46 +699,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Disallowed_name
           | Team_folder
           | Too_many_write_operations
-
-        let of_yojson = function
-          | `Assoc
-              [ (".tag", `String "malformed_path")
-              ; ("malformed_path", `String path) ] ->
-            Ok (Malformed_path (Some path))
-          | `Assoc [(".tag", `String "malformed_path")]
-          | `String "malformed_path" ->
-            Ok (Malformed_path None)
-          | `Assoc [(".tag", `String "conflict"); ("conflict", conflict)] ->
-            WriteConflictError.Type.of_yojson conflict
-            |>? fun c -> Ok (Conflict c)
-          | `Assoc [(".tag", `String "no_write_permission")]
-          | `String "no_write_permission" ->
-            Ok No_write_permission
-          | `Assoc [(".tag", `String "insufficient_space")]
-          | `String "insufficient_space" ->
-            Ok Insufficient_space
-          | `Assoc [(".tag", `String "disallowed_name")]
-          | `String "disallowed_name" ->
-            Ok Disallowed_name
-          | `Assoc [(".tag", `String "team_folder")] | `String "team_folder" ->
-            Ok Team_folder
-          | `Assoc [(".tag", `String "too_many_write_operations")]
-          | `String "too_many_write_operations" ->
-            Ok Too_many_write_operations
-          | _ -> Error "Invalid WriteError format"
-
-        let to_yojson = function
-          | Malformed_path (Some p) ->
-            `Assoc [(".tag", `String "malformed_path"); ("path", `String p)]
-          | Malformed_path None -> `String "malformed_path"
-          | Conflict c ->
-            let conflict = WriteConflictError.Type.to_yojson c in
-            `Assoc [(".tag", `String "conflict"); ("conflict", conflict)]
-          | No_write_permission -> `String "no_write_permission"
-          | Insufficient_space -> `String "insufficient_space"
-          | Disallowed_name -> `String "disallowed_name"
-          | Team_folder -> `String "team_folder"
-          | Too_many_write_operations -> `String "too_many_write_operations"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -1122,17 +717,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module CreateFolderError = struct
       module Type = struct
-        type t = Path of WriteError.Type.t
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            WriteError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | _ -> Error "Invalid LookupError format"
-
-        let to_yojson = function
-          | Path p ->
-            let path = WriteError.Type.to_yojson p in
-            `Assoc [(".tag", `String "path"); ("path", path)]
+        type t = Path of WriteError.Type.t [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -1166,29 +751,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Path_write of WriteError.Type.t
           | Too_many_write_operations
           | Too_many_files
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "path_lookup"); ("path_lookup", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path_lookup p)
-          | `Assoc [(".tag", `String "path_write"); ("path_write", path)] ->
-            WriteError.Type.of_yojson path |>? fun c -> Ok (Path_write c)
-          | `Assoc [(".tag", `String "too_many_write_operations")]
-          | `String "too_many_write_operations" ->
-            Ok Too_many_write_operations
-          | `Assoc [(".tag", `String "too_many_files")]
-          | `String "too_many_files" ->
-            Ok Too_many_files
-          | _ -> Error "Invalid WriteError format"
-
-        let to_yojson = function
-          | Path_lookup p ->
-            let p = LookupError.Type.to_yojson p in
-            `Assoc [(".tag", `String "path_lookup"); ("path_lookup", p)]
-          | Path_write p ->
-            let p = WriteError.Type.to_yojson p in
-            `Assoc [(".tag", `String "path_write"); ("path_write", p)]
-          | Too_many_write_operations -> `String "too_many_write_operations"
-          | Too_many_files -> `String "too_many_files"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -1238,67 +801,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Internal_error
           | Cant_move_shared_folder
           | Cant_move_into_vault
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "from_lookup"); ("from_lookup", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (From_lookup p)
-          | `Assoc [(".tag", `String "from_write"); ("from_write", path)] ->
-            WriteError.Type.of_yojson path |>? fun c -> Ok (From_write c)
-          | `Assoc [(".tag", `String "to"); ("to", path)] ->
-            WriteError.Type.of_yojson path |>? fun c -> Ok (To c)
-          | `Assoc [(".tag", `String "cant_copy_shared_folder")]
-          | `String "cant_copy_shared_folder" ->
-            Ok Cant_copy_shared_folder
-          | `Assoc [(".tag", `String "cant_nest_shared_folder")]
-          | `String "cant_nest_shared_folder" ->
-            Ok Cant_nest_shared_folder
-          | `Assoc [(".tag", `String "cant_move_folder_into_itself")]
-          | `String "cant_move_folder_into_itself" ->
-            Ok Cant_move_folder_into_itself
-          | `Assoc [(".tag", `String "too_many_files")]
-          | `String "too_many_files" ->
-            Ok Too_many_files
-          | `Assoc [(".tag", `String "duplicated_or_nested_paths")]
-          | `String "duplicated_or_nested_paths" ->
-            Ok Duplicated_or_nested_paths
-          | `Assoc [(".tag", `String "cant_transfer_ownership")]
-          | `String "cant_transfer_ownership" ->
-            Ok Cant_transfer_ownership
-          | `Assoc [(".tag", `String "insufficient_quota")]
-          | `String "insufficient_quota" ->
-            Ok Insufficient_quota
-          | `Assoc [(".tag", `String "internal_error")]
-          | `String "internal_error" ->
-            Ok Internal_error
-          | `Assoc [(".tag", `String "cant_move_shared_folder")]
-          | `String "cant_move_shared_folder" ->
-            Ok Cant_move_shared_folder
-          | `Assoc [(".tag", `String "cant_move_into_vault")]
-          | `String "cant_move_into_vault" ->
-            Ok Cant_move_into_vault
-          | _ -> Error "Invalid WriteError format"
-
-        let to_yojson = function
-          | From_lookup p ->
-            let p = LookupError.Type.to_yojson p in
-            `Assoc [(".tag", `String "from_lookup"); ("from_lookup", p)]
-          | From_write p ->
-            let p = WriteError.Type.to_yojson p in
-            `Assoc [(".tag", `String "from_write"); ("from_write", p)]
-          | To p ->
-            let p = WriteError.Type.to_yojson p in
-            `Assoc [(".tag", `String "to"); ("to", p)]
-          | Cant_copy_shared_folder -> `String "cant_copy_shared_folder"
-          | Cant_nest_shared_folder -> `String "cant_nest_shared_folder"
-          | Cant_move_folder_into_itself ->
-            `String "cant_move_folder_into_itself"
-          | Too_many_files -> `String "too_many_files"
-          | Insufficient_quota -> `String "insufficient_quota"
-          | Duplicated_or_nested_paths -> `String "duplicated_or_nested_paths"
-          | Cant_transfer_ownership -> `String "cant_transfer_ownership"
-          | Internal_error -> `String "internal_error"
-          | Cant_move_shared_folder -> `String "cant_move_shared_folder"
-          | Cant_move_into_vault -> `String "cant_move_into_vault"
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -1335,17 +838,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module GetMetadataError = struct
       module Type = struct
-        type t = Path of LookupError.Type.t
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "path"); ("path", path)] ->
-            LookupError.Type.of_yojson path |>? fun p -> Ok (Path p)
-          | _ -> Error "Invalid WriteError format"
-
-        let to_yojson = function
-          | Path p ->
-            let p = LookupError.Type.to_yojson p in
-            `Assoc [(".tag", `String "path"); ("path", p)]
+        type t = Path of LookupError.Type.t [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)

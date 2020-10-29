@@ -1,6 +1,5 @@
 open Endpoint
 open RemoteProcedureCall
-open Infix
 
 module Make (C : Cohttp_lwt.S.Client) = struct
   (*
@@ -27,20 +26,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Anyone
           | Team
-
-        let of_string = function
-          | "anyone" -> Ok Anyone
-          | "team" -> Ok Team
-          | _ -> Error "Invalid SharedFolderMemberPolicy format"
-
-        let to_string = function Anyone -> "anyone" | Team -> "team"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid SharedFolderMemberPolicy format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -51,22 +37,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | From_anyone
           | From_team_only
-
-        let of_string = function
-          | "from_anyone" -> Ok From_anyone
-          | "from_team_only" -> Ok From_team_only
-          | _ -> Error "Invalid SharedFolderJoinPolicy format"
-
-        let to_string = function
-          | From_anyone -> "from_anyone"
-          | From_team_only -> "from_team_only"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid SharedFolderJoinPolicy format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -78,24 +49,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Default_public
           | Default_team_only
           | Team_only
-
-        let of_string = function
-          | "default_public" -> Ok Default_public
-          | "default_team_only" -> Ok Default_team_only
-          | "team_only" -> Ok Team_only
-          | _ -> Error "Invalid SharedLinkCreatePolicy format"
-
-        let to_string = function
-          | Default_public -> "default_public"
-          | Default_team_only -> "default_team_only"
-          | Team_only -> "team_only"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid SharedLinkCreatePolicy format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -118,20 +72,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Disabled
           | Enabled
-
-        let of_string = function
-          | "disabled" -> Ok Disabled
-          | "enabled" -> Ok Enabled
-          | _ -> Error "Invalid OfficeAddinPolicy format"
-
-        let to_string = function Disabled -> "disabled" | Enabled -> "enabled"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid OfficeAddinPolicy format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -156,24 +97,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Basic
           | Pro
           | Business
-
-        let of_string = function
-          | "basic" -> Ok Basic
-          | "pro" -> Ok Pro
-          | "business" -> Ok Business
-          | _ -> Error "Invalid AccountType format"
-
-        let to_string = function
-          | Basic -> "basic"
-          | Pro -> "pro"
-          | Business -> "business"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] -> of_string v
-          | `String v -> of_string v
-          | _ -> Error "Invalid AccountType format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -207,27 +131,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Team of TeamRootInfo.Type.t
           | User of UserRootInfo.Type.t
-
-        let of_yojson v =
-          let sorted = Yojson.Safe.sort v in
-          match sorted with
-          | `Assoc ((".tag", `String "team") :: tl) ->
-            TeamRootInfo.Type.of_yojson (`Assoc tl)
-            |>? fun team -> Ok (Team team)
-          | `Assoc ((".tag", `String "user") :: tl) ->
-            UserRootInfo.Type.of_yojson (`Assoc tl)
-            |>? fun user -> Ok (User user)
-          | _ -> Error "Invalid RootInfo format"
-
-        let to_yojson = function
-          | Team team -> (
-            match TeamRootInfo.Type.to_yojson team with
-            | `Assoc tl -> `Assoc ((".tag", `String "team") :: tl)
-            | _ -> `Null)
-          | User user -> (
-            match UserRootInfo.Type.to_yojson user with
-            | `Assoc tl -> `Assoc ((".tag", `String "user") :: tl)
-            | _ -> `Null)
+        [@@deriving dropbox {mode = SubType}]
       end
     end
 

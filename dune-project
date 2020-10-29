@@ -19,6 +19,8 @@
   (dune (and :build (> 2.0)))
   (lwt (>= 5.0.0))
   (lwt_ppx (and :build (>= 2.0.1)))
+  (ppxlib (and :build (>= 0.15.0)))
+  (ppx_deriving (and :build (>= 4.5)))
   (ppx_deriving_yojson (and :build (>= 3.5.2)))
   (uri (>= 3.1.0))
 ))

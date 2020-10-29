@@ -18,16 +18,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module CountFileRequestError = struct
       module Type = struct
-        type t = Disabled_for_team
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String "disabled_for_team")]
-          | `String "disabled_for_team" ->
-            Ok Disabled_for_team
-          | _ -> Error "Invalid CountFileRequestError format"
-
-        let to_yojson = function
-          | Disabled_for_team -> `String "disabled_for_team"
+        type t = Disabled_for_team [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)
@@ -93,35 +84,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Not_found
           | Rate_limit
           | Validation_error
-
-        let of_string = function
-          | "app_lacks_access" -> Ok App_lacks_access
-          | "disabled_for_team" -> Ok Disabled_for_team
-          | "email_unverified" -> Ok Email_unverified
-          | "invalid_location" -> Ok Invalid_location
-          | "no_permission" -> Ok No_permission
-          | "not_a_folder" -> Ok Not_a_folder
-          | "not_found" -> Ok Not_found
-          | "rate_limit" -> Ok Rate_limit
-          | "validation_error" -> Ok Validation_error
-          | _ -> Error "Invalid CreateFileRequestError format"
-
-        let to_string = function
-          | App_lacks_access -> "app_lacks_access"
-          | Disabled_for_team -> "disabled_for_team"
-          | Email_unverified -> "email_unverified"
-          | Invalid_location -> "invalid_location"
-          | No_permission -> "no_permission"
-          | Not_a_folder -> "not_a_folder"
-          | Not_found -> "not_found"
-          | Rate_limit -> "rate_limit"
-          | Validation_error -> "validation_error"
-
-        let of_yojson = function
-          | `Assoc [(".tag", `String v)] | `String v -> of_string v
-          | _ -> Error "Invalid CreateFileRequestError format"
-
-        let to_yojson v = `String (to_string v)
+        [@@deriving dropbox]
       end
 
       module Json = Json.Make (Type)

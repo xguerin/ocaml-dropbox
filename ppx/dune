@@ -1,0 +1,6 @@
+(library
+ (name ppx_deriving_dropbox)
+ (synopsis "[@@deriving dropbox]")
+ (preprocess (pps ppxlib.metaquot))
+ (libraries compiler-libs.common ppxlib ppx_deriving.api)
+ (kind ppx_deriver))
