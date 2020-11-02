@@ -61,6 +61,15 @@ module RemoteProcedureCall = struct
       >>=? fun (_, body) -> Body.to_string body >>= deserialize
   end
 
+  module Provider (C : S.Client) (I : Data) (R : Error.T) (E : Info) = struct
+    let call ?(headers = Header.init ()) ?q v =
+      let headers = Header.add headers "Content-Type" "application/json" in
+      let uri =
+        match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
+      let content = I.Json.to_string v in
+      C.post ~body:(`String content) ~headers uri >>= R.handle
+  end
+
   module Supplier (C : S.Client) (O : Data) (R : Error.T) (E : Info) = struct
     let deserialize v =
       match O.Json.of_string v with
