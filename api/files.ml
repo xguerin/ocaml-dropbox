@@ -26,6 +26,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         [@@deriving dropbox]
       end
 
+      module Json = Json.Make (Type)
+
       let to_string = function
         | Type.Malformed_path -> "Malformed path"
         | Type.Not_file -> "Not a file"
