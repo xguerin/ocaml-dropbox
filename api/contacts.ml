@@ -32,7 +32,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module DeleteManualContacts = struct
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Root.api "/contacts/delete_manual_contacts"
@@ -51,7 +51,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
   module DeleteManualContactsBatch = struct
     module Arg = Protocol.DeleteManualContactsArg
-    module Error = Error.S (Protocol.DeleteManualContactsError)
+    module Error = Error.Make (Protocol.DeleteManualContactsError)
 
     module Info = struct
       let uri = Root.api "/contacts/delete_manual_contacts_batch"

@@ -192,7 +192,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_account_uri = Root.api "/users/get_account"
 
   let get_account (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -202,7 +202,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_account_batch_uri = Root.api "/users/get_account_batch"
 
   let get_account_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -211,7 +211,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
   module GetCurrentAccount = struct
     module Result = Protocol.Account
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Root.api "/users/get_current_account"
@@ -230,7 +230,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
   module GetSpaceUsage = struct
     module Result = Protocol.SpaceUsage
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Root.api "/users/get_space_usage"

@@ -59,7 +59,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module SetProfilePhoto = struct
     module Arg = Protocol.SetProfilePhotoArg
     module Result = Protocol.SetProfilePhotoResult
-    module Error = Error.S (Protocol.SetProfilePhotoError)
+    module Error = Error.Make (Protocol.SetProfilePhotoError)
 
     module Info = struct
       let uri = Root.api "/account/set_profile_photo"
@@ -71,6 +71,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let set_profile_photo ~session data =
     let request = SetProfilePhoto.Arg.Type.{photo = Base64_data data}
     and headers = Session.headers session in
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     SetProfilePhoto.Fn.call ~headers request
 end

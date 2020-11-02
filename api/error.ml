@@ -42,7 +42,7 @@ module Void = struct
   let to_string _ = ""
 end
 
-module S (E : Endpoint) : T with type error = E.Type.t = struct
+module Make (E : Endpoint) : T with type error = E.Type.t = struct
   type error = E.Type.t [@@deriving of_yojson]
 
   type endpoint =

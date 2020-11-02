@@ -59,7 +59,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
   module Token = struct
     module Result = Protocol.Result
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Uri.of_string "https://api.dropboxapi.com/oauth2/token"
@@ -87,7 +87,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Revoke = struct
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Root.api "/auth/token/revoke"

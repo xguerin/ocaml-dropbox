@@ -108,7 +108,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
   module Count = struct
     module Result = Protocol.CountFileRequestResult
-    module Error = Error.S (Protocol.CountFileRequestError)
+    module Error = Error.Make (Protocol.CountFileRequestError)
 
     module Info = struct
       let uri = Root.api "/file_requests/count"
@@ -130,7 +130,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Create = struct
     module Args = Protocol.CreateFileRequestArgs
     module Result = Protocol.FileRequest
-    module Error = Error.S (Protocol.CreateFileRequestError)
+    module Error = Error.Make (Protocol.CreateFileRequestError)
 
     module Info = struct
       let uri = Root.api "/file_requests/create"
@@ -152,7 +152,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let delete_uri = Root.api "/file_requests/delete"
 
   let delete (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -162,7 +162,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let delete_all_closed_uri = Root.api "/file_requests/delete_all_closed"
 
   let delete_all_closed (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -172,7 +172,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_uri = Root.api "/file_requests/get"
 
   let get (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -182,7 +182,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let list_uri = Root.api "/file_requests/list"
 
   let list (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -192,6 +192,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let update_uri = Root.api "/file_requests/update"
 
   let update (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 end

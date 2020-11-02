@@ -6,35 +6,14 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Protocol = struct
+    open Common.Protocol
+
     module DownloadArg = struct
       module Type = struct
         type t = {path : string} [@@deriving yojson]
       end
 
       module Json = Json.Make (Type)
-    end
-
-    module LookupError = struct
-      module Type = struct
-        type t =
-          | Malformed_path
-          | Not_file
-          | Not_folder
-          | Not_found
-          | Restricted_content
-          | Unsupported_content_type
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Malformed_path -> "Malformed path"
-        | Type.Not_file -> "Not a file"
-        | Type.Not_folder -> "Not a folder"
-        | Type.Not_found -> "Not found"
-        | Type.Restricted_content -> "Restricted content"
-        | Type.Unsupported_content_type -> "Unsupported content type"
     end
 
     module DownloadError = struct
@@ -149,28 +128,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.Make (Type)
     end
 
-    module PropertyField = struct
-      module Type = struct
-        type t =
-          { name : string
-          ; value : string }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module PropertyGroup = struct
-      module Type = struct
-        type t =
-          { template_id : string
-          ; fields : PropertyField.Type.t list }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
     module FileLockMetadata = struct
       module Type = struct
         type t =
@@ -201,7 +158,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; sharing_info : FileSharingInfo.Type.t option [@default None]
           ; is_downloadable : bool
           ; export_info : ExportInfo.Type.t option [@default None]
-          ; property_groups : PropertyGroup.Type.t option [@default None]
+          ; property_groups : PropertyGroup.Type.t list option [@default None]
           ; has_explicit_shared_members : bool option [@default None]
           ; content_hash : string option [@default None]
           ; file_lock_info : FileLockMetadata.Type.t option [@default None] }
@@ -235,7 +192,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; parent_shared_folder_id : string option [@default None]
           ; shared_folder_id : string option [@default None]
           ; sharing_info : FolderSharingInfo.Type.t option [@default None]
-          ; property_groups : PropertyGroup.Type.t option [@default None] }
+          ; property_groups : PropertyGroup.Type.t list option [@default None]
+          }
         [@@deriving yojson]
       end
 
@@ -856,7 +814,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Copy = struct
     module Arg = Protocol.RelocationArg
     module Result = Protocol.RelocationResult
-    module Error = Error.S (Protocol.RelocationError)
+    module Error = Error.Make (Protocol.RelocationError)
 
     module Info = struct
       let uri = Root.api "/files/copy_v2"
@@ -883,7 +841,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let copy_batch_uri = Root.api "/files/copy_batch_v2"
 
   let copy_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -893,7 +851,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let copy_batch_check_uri = Root.api "/files/copy_batch/check_v2"
 
   let copy_batch_check (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -903,7 +861,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let copy_reference_get_uri = Root.api "/files/copy_reference/get"
 
   let copy_reference_get (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -913,7 +871,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let copy_reference_save_uri = Root.api "/files/copy_reference/save"
 
   let copy_reference_save (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -923,7 +881,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module CreateFolder = struct
     module Arg = Protocol.CreateFolderArg
     module Result = Protocol.CreateFolderResult
-    module Error = Error.S (Protocol.CreateFolderError)
+    module Error = Error.Make (Protocol.CreateFolderError)
 
     module Info = struct
       let uri = Root.api "/files/create_folder_v2"
@@ -944,7 +902,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let create_folder_batch_uri = Root.api "/files/create_folder_batch"
 
   let create_folder_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -955,7 +913,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Root.api "/files/create_folder_batch/check"
 
   let create_folder_batch_check (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -965,7 +923,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Delete = struct
     module Arg = Protocol.DeleteArg
     module Result = Protocol.DeleteResult
-    module Error = Error.S (Protocol.DeleteError)
+    module Error = Error.Make (Protocol.DeleteError)
 
     module Info = struct
       let uri = Root.api "/files/delete_v2"
@@ -986,7 +944,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let delete_batch_uri = Root.api "/files/delete_batch"
 
   let delete_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -996,7 +954,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let delete_batch_check_uri = Root.api "/files/delete_batch/check"
 
   let delete_batch_check (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1006,7 +964,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Download = struct
     module Arg = Protocol.DownloadArg
     module Result = Protocol.FileMetadata
-    module Error = Error.S (Protocol.DownloadError)
+    module Error = Error.Make (Protocol.DownloadError)
 
     module Info = struct
       let uri = Root.content "/files/download"
@@ -1026,7 +984,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module DownloadZip = struct
     module Arg = Protocol.DownloadArg
     module Result = Protocol.DownloadZipResult
-    module Error = Error.S (Protocol.DownloadZipError)
+    module Error = Error.Make (Protocol.DownloadZipError)
 
     module Info = struct
       let uri = Root.content "/files/download_zip"
@@ -1046,7 +1004,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let export_uri = Root.content "/files/export"
 
   let export (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1056,7 +1014,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_file_lock_batch_uri = Root.api "/files/get_file_lock_batch"
 
   let get_file_lock_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1066,7 +1024,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module GetMetadata = struct
     module Arg = Protocol.GetMetadataArg
     module Result = Protocol.Metadata
-    module Error = Error.S (Protocol.GetMetadataError)
+    module Error = Error.Make (Protocol.GetMetadataError)
 
     module Info = struct
       let uri = Root.api "/files/get_metadata"
@@ -1093,7 +1051,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_preview_uri = Root.content "/files/get_preview"
 
   let get_preview (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1103,7 +1061,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_temporary_link_uri = Root.api "/files/get_temporary_link"
 
   let get_temporary_link (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1114,7 +1072,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Root.api "/files/get_temporary_upload_link"
 
   let get_temporary_upload_link (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1124,7 +1082,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module GetThumbnail = struct
     module Arg = Protocol.ThumbnailV2Arg
     module Result = Protocol.PreviewResult
-    module Error = Error.S (Protocol.ThumbnailV2Error)
+    module Error = Error.Make (Protocol.ThumbnailV2Error)
 
     module Info = struct
       let uri = Root.content "/files/get_thumbnail_v2"
@@ -1145,7 +1103,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_thumbnail_batch_uri = Root.content "/files/get_thumbnail_batch"
 
   let get_thumbnail_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1155,7 +1113,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module ListFolderContinue = struct
     module Arg = Protocol.ListFolderContinueArg
     module Result = Protocol.ListFolderResult
-    module Error = Error.S (Protocol.ListFolderContinueError)
+    module Error = Error.Make (Protocol.ListFolderContinueError)
 
     module Info = struct
       let uri = Root.api "/files/list_folder/continue"
@@ -1176,7 +1134,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module ListFolder = struct
     module Arg = Protocol.ListFolderArg
     module Result = Protocol.ListFolderResult
-    module Error = Error.S (Protocol.ListFolderError)
+    module Error = Error.Make (Protocol.ListFolderError)
 
     module Info = struct
       let uri = Root.api "/files/list_folder"
@@ -1209,7 +1167,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Root.api "/files/list_folder/get_latest_cursor"
 
   let list_folder_get_latest_cursor (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1219,7 +1177,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let list_folder_longpoll_uri = Root.api "/files/list_folder/longpoll"
 
   let list_folder_longpoll (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1229,7 +1187,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let list_revisions_uri = Root.api "/files/list_revisions"
 
   let list_revisions (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1239,7 +1197,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let lock_file_batch_uri = Root.api "/files/lock_file_batch"
 
   let lock_file_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1249,7 +1207,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let move_uri = Root.api "/files/move_v2"
 
   let move (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1259,7 +1217,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let move_batch_uri = Root.api "/files/move_batch_v2"
 
   let move_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1269,7 +1227,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let move_batch_check_uri = Root.api "/files/move_batch/check_v2"
 
   let move_batch_check (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1279,7 +1237,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let permanently_delete_uri = Root.api "/files/permanently_delete"
 
   let permanently_delete (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1289,7 +1247,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let restore_uri = Root.api "/files/restore"
 
   let restore (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1299,7 +1257,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let save_url_uri = Root.api "/files/save_url"
 
   let save_url (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1310,7 +1268,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Root.api "/files/save_url/check_job_status"
 
   let save_url_check_job_status (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1320,7 +1278,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module SearchContinue = struct
     module Arg = Protocol.SearchV2ContinueArg
     module Result = Protocol.SearchV2Result
-    module Error = Error.S (Protocol.SearchError)
+    module Error = Error.Make (Protocol.SearchError)
 
     module Info = struct
       let uri = Root.api "/files/search/continue_v2"
@@ -1341,7 +1299,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Search = struct
     module Arg = Protocol.SearchV2Arg
     module Result = Protocol.SearchV2Result
-    module Error = Error.S (Protocol.SearchError)
+    module Error = Error.Make (Protocol.SearchError)
 
     module Info = struct
       let uri = Root.api "/files/search_v2"
@@ -1374,7 +1332,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let unlock_file_batch_uri = Root.api "/files/unlock_file_batch"
 
   let unlock_file_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1384,7 +1342,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let upload_uri = Root.content "/files/upload"
 
   let upload (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1394,7 +1352,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let upload_session_start_uri = Root.content "/files/upload_session/start"
 
   let upload_session_start (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1404,7 +1362,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let upload_session_append_uri = Root.content "/files/upload_session/append_v2"
 
   let upload_session_append (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1414,7 +1372,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let upload_session_finish_uri = Root.content "/files/upload_session/finish"
 
   let upload_session_finish (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1425,7 +1383,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Root.api "/files/upload_session/finish_batch"
 
   let upload_session_finish_batch (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 
   (*
@@ -1436,6 +1394,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Root.api "/files/upload_session/finish_batch/check"
 
   let upload_session_finish_batch_check (_ : Session.Type.t) =
-    let module Error = Error.S (Error.Void) in
+    let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
 end

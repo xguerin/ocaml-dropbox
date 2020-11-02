@@ -43,7 +43,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module App = struct
     module Query = Protocol.Query
     module Result = Protocol.Result
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Root.api "/check/app"
@@ -64,7 +64,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module User = struct
     module Query = Protocol.Query
     module Result = Protocol.Result
-    module Error = Error.S (Error.Void)
+    module Error = Error.Make (Error.Void)
 
     module Info = struct
       let uri = Root.api "/check/user"
