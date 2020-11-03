@@ -22,6 +22,26 @@ module Protocol = struct
       | Type.Unsupported_content_type -> "Unsupported content type"
   end
 
+  module PropertyType = struct
+    module Type = struct
+      type t = String [@@deriving dropbox]
+    end
+
+    module Json = Json.Make (Type)
+  end
+
+  module PropertyFieldTemplate = struct
+    module Type = struct
+      type t =
+        { name : string
+        ; description : string
+        ; type_ : PropertyType.Type.t [@key "type"] }
+      [@@deriving yojson]
+    end
+
+    module Json = Json.Make (Type)
+  end
+
   module PropertyField = struct
     module Type = struct
       type t =

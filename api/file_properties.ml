@@ -125,6 +125,277 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         | Type.Property_group_lookup e ->
           "Property group lookup: " ^ LookUpPropertiesError.to_string e
     end
+
+    module LogicalOperator = struct
+      module Type = struct
+        type t = Or_operator [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchMode = struct
+      module Type = struct
+        type t = Field_name of string [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module TemplateFilter = struct
+      module Type = struct
+        type t =
+          | Filter_some of string list
+          | Filter_none
+        [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchQuery = struct
+      module Type = struct
+        type t =
+          { query : string
+          ; mode : PropertiesSearchMode.Type.t
+          ; logical_operator : LogicalOperator.Type.t }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchArg = struct
+      module Type = struct
+        type t =
+          { queries : PropertiesSearchQuery.Type.t list
+          ; template_filter : TemplateFilter.Type.t }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchMatch = struct
+      module Type = struct
+        type t =
+          { id : string
+          ; path : string
+          ; is_deleted : bool
+          ; property_groups : PropertyGroup.Type.t list }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchResult = struct
+      module Type = struct
+        type t =
+          { matches : PropertiesSearchMatch.Type.t list
+          ; cursor : string }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchError = struct
+      module Type = struct
+        type t = Property_group_lookup of LookUpPropertiesError.Type.t
+        [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Property_group_lookup e ->
+          "Property group lookup: " ^ LookUpPropertiesError.to_string e
+    end
+
+    module PropertiesSearchContinueArg = struct
+      module Type = struct
+        type t = {cursor : string} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PropertiesSearchContinueError = struct
+      module Type = struct
+        type t = Reset [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function Type.Reset -> "Reset"
+    end
+
+    module PropertyGroupUpdate = struct
+      module Type = struct
+        type t =
+          { template_id : string
+          ; add_or_update_fields : PropertyField.Type.t list option
+          ; remove_fields : string list option }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UpdatePropertiesArg = struct
+      module Type = struct
+        type t =
+          { path : string
+          ; update_property_groups : PropertyGroupUpdate.Type.t list }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UpdatePropertiesError = struct
+      module Type = struct
+        type t =
+          | Template_not_found of string
+          | Restricted_content
+          | Lookup_error of LookupError.Type.t
+          | Unsupported_folder
+          | Property_field_too_large
+          | Does_not_fit_template
+          | Duplicate_property_groups
+          | Property_group_lookup of LookUpPropertiesError.Type.t
+        [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Template_not_found e -> "Template not found: " ^ e
+        | Type.Restricted_content -> "Restricted content"
+        | Type.Lookup_error e -> "Lookup error: " ^ LookupError.to_string e
+        | Type.Unsupported_folder -> "Unsupported folder"
+        | Type.Property_field_too_large -> "Property field too large"
+        | Type.Does_not_fit_template -> "Does not fit template"
+        | Type.Duplicate_property_groups -> "Duplicate property groups"
+        | Type.Property_group_lookup e ->
+          "Property group lookup: " ^ LookUpPropertiesError.to_string e
+    end
+
+    module AddTemplateArg = struct
+      module Type = struct
+        type t =
+          { name : string
+          ; description : string
+          ; fields : PropertyFieldTemplate.Type.t list }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module AddTemplateResult = struct
+      module Type = struct
+        type t = {template_id : string} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module ModifyTemplateError = struct
+      module Type = struct
+        type t =
+          | Template_not_found of string
+          | Restricted_content
+          | Conflicting_property_names
+          | Too_many_properties
+          | Too_many_templates
+          | Template_attribute_too_large
+        [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Template_not_found e -> "Template not found: " ^ e
+        | Type.Restricted_content -> "Restricted content"
+        | Type.Conflicting_property_names -> "Conflicting property names"
+        | Type.Too_many_properties -> "Too many properties"
+        | Type.Too_many_templates -> "Too many templates"
+        | Type.Template_attribute_too_large -> "Template attribute too large"
+    end
+
+    module GetTemplateArg = struct
+      module Type = struct
+        type t = {template_id : string} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module GetTemplateResult = struct
+      module Type = struct
+        type t =
+          { name : string
+          ; description : string
+          ; fields : PropertyFieldTemplate.Type.t list }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module TemplateError = struct
+      module Type = struct
+        type t =
+          | Template_not_found of string
+          | Restricted_content
+        [@@deriving dropbox]
+      end
+
+      module Json = Json.Make (Type)
+
+      let to_string = function
+        | Type.Template_not_found e -> "Template not found: " ^ e
+        | Type.Restricted_content -> "Restricted content"
+    end
+
+    module ListTemplateResult = struct
+      module Type = struct
+        type t = {template_id : string list} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module RemoveTemplateArg = struct
+      module Type = struct
+        type t = {template_id : string} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UpdateTemplateArg = struct
+      module Type = struct
+        type t =
+          { template_id : string
+          ; name : string option
+          ; description : string option
+          ; add_fields : PropertyFieldTemplate.Type.t list option }
+        [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UpdateTemplateResult = struct
+      module Type = struct
+        type t = {template_id : string} [@@deriving yojson]
+      end
+
+      module Json = Json.Make (Type)
+    end
   end
 
   (*
@@ -191,85 +462,167 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Properties search.
    *)
 
-  let properties_search_uri = Root.api "/file_properties/properties/search"
+  module PropertySearch = struct
+    module Arg = Protocol.PropertiesSearchArg
+    module Result = Protocol.PropertiesSearchResult
+    module Error = Error.Make (Protocol.PropertiesSearchError)
 
-  let properties_search (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/properties/search"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let properties_search ~session
+      ?(template_filter = Protocol.TemplateFilter.Type.Filter_none) queries =
+    let request = PropertySearch.Arg.Type.{queries; template_filter}
+    and headers = Session.headers session in
+    PropertySearch.Fn.call ~headers request
 
   (*
    * Properties search continue.
    *)
 
-  let properties_search_continue_uri =
-    Root.api "/file_properties/properties/search/continue"
+  module PropertySearchContinue = struct
+    module Arg = Protocol.PropertiesSearchContinueArg
+    module Result = Protocol.PropertiesSearchResult
+    module Error = Error.Make (Protocol.PropertiesSearchContinueError)
 
-  let properties_search_continue (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/properties/search/continue"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let properties_search_continue ~session cursor =
+    let request = PropertySearchContinue.Arg.Type.{cursor}
+    and headers = Session.headers session in
+    PropertySearchContinue.Fn.call ~headers request
 
   (*
    * Properties update.
    *)
 
-  let properties_update_uri = Root.api "/file_properties/properties/update"
+  module PropertyUpdate = struct
+    module Arg = Protocol.UpdatePropertiesArg
+    module Error = Error.Make (Protocol.UpdatePropertiesError)
 
-  let properties_update (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/properties/update"
+    end
+
+    module Fn = RemoteProcedureCall.Provider (C) (Arg) (Error) (Info)
+  end
+
+  let properties_update ~session path update_property_groups =
+    let request = PropertyUpdate.Arg.Type.{path; update_property_groups}
+    and headers = Session.headers session in
+    PropertyUpdate.Fn.call ~headers request
 
   (*
    * Templates add for user.
    *)
 
-  let templates_add_for_user_uri =
-    Root.api "/file_properties/templates/add_for_user"
+  module TemplateAddForUser = struct
+    module Arg = Protocol.AddTemplateArg
+    module Result = Protocol.AddTemplateResult
+    module Error = Error.Make (Protocol.ModifyTemplateError)
 
-  let templates_add_for_user (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/templates/add_for_user"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let templates_add_for_user ~session name description fields =
+    let request = TemplateAddForUser.Arg.Type.{name; description; fields}
+    and headers = Session.headers session in
+    TemplateAddForUser.Fn.call ~headers request
 
   (*
    * Templates get for user.
    *)
 
-  let templates_get_for_user_uri =
-    Root.api "/file_properties/templates/get_for_user"
+  module TemplateGetForUser = struct
+    module Arg = Protocol.GetTemplateArg
+    module Result = Protocol.GetTemplateResult
+    module Error = Error.Make (Protocol.TemplateError)
 
-  let templates_get_for_user (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/templates/get_for_user"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let templates_get_for_user ~session template_id =
+    let request = TemplateGetForUser.Arg.Type.{template_id}
+    and headers = Session.headers session in
+    TemplateGetForUser.Fn.call ~headers request
 
   (*
    * Templates list for user.
    *)
 
-  let templates_list_for_user_uri =
-    Root.api "/file_properties/templates/list_for_user"
+  module TemplateListForUser = struct
+    module Result = Protocol.ListTemplateResult
+    module Error = Error.Make (Protocol.TemplateError)
 
-  let templates_list_for_user (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/templates/list_for_user"
+    end
+
+    module Fn = RemoteProcedureCall.Supplier (C) (Result) (Error) (Info)
+  end
+
+  let templates_list_for_user ~session () =
+    let headers = Session.headers session in
+    TemplateListForUser.Fn.call ~headers ()
 
   (*
    * Templates remove for user.
    *)
 
-  let templates_remove_for_user_uri =
-    Root.api "/file_properties/templates/remove_for_user"
+  module TemplateRemoveForUser = struct
+    module Arg = Protocol.RemoveTemplateArg
+    module Error = Error.Make (Protocol.TemplateError)
 
-  let templates_remove_for_user (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/templates/remove_for_user"
+    end
+
+    module Fn = RemoteProcedureCall.Provider (C) (Arg) (Error) (Info)
+  end
+
+  let templates_remove_for_user ~session template_id =
+    let request = TemplateRemoveForUser.Arg.Type.{template_id}
+    and headers = Session.headers session in
+    TemplateRemoveForUser.Fn.call ~headers request
 
   (*
    * Templates update for user.
    *)
 
-  let templates_update_for_user_uri =
-    Root.api "/file_properties/templates/update_for_user"
+  module TemplateUpdateForUser = struct
+    module Arg = Protocol.UpdateTemplateArg
+    module Result = Protocol.UpdateTemplateResult
+    module Error = Error.Make (Protocol.ModifyTemplateError)
 
-  let templates_update_for_user (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/file_properties/templates/update_for_user"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let templates_update_for_user ~session ?name ?description ?add_fields
+      template_id =
+    let request =
+      TemplateUpdateForUser.Arg.Type.
+        {template_id; name; description; add_fields}
+    and headers = Session.headers session in
+    TemplateUpdateForUser.Fn.call ~headers request
 end
