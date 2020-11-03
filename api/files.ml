@@ -1,811 +1,7 @@
 open Endpoint
 
 module Make (C : Cohttp_lwt.S.Client) = struct
-  (*
-   * Protocol.
-   *)
-
-  module Protocol = struct
-    open Common.Protocol
-
-    module DownloadArg = struct
-      module Type = struct
-        type t = {path : string} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module DownloadError = struct
-      module Type = struct
-        type t =
-          | Path of LookupError.Type.t
-          | Unsupported_file
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Path path -> LookupError.to_string path
-        | Type.Unsupported_file -> "Unsupported file"
-    end
-
-    module Dimensions = struct
-      module Type = struct
-        type t =
-          { height : Int64.t
-          ; width : Int64.t }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module GpsCoordinates = struct
-      module Type = struct
-        type t =
-          { latitude : float
-          ; longitude : float }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module PhotoMetadata = struct
-      module Type = struct
-        type t =
-          { dimensions : Dimensions.Type.t option [@default None]
-          ; location : Dimensions.Type.t option [@default None]
-          ; time_taken : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module VideoMetadata = struct
-      module Type = struct
-        type t =
-          { dimensions : Dimensions.Type.t option [@default None]
-          ; location : Dimensions.Type.t option [@default None]
-          ; time_taken : string option [@default None]
-          ; duration : Int64.t option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module MediaMetadata = struct
-      module Type = struct
-        type t =
-          | Photo of PhotoMetadata.Type.t
-          | Video of VideoMetadata.Type.t
-        [@@deriving dropbox {mode = SubType}]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module MediaInfo = struct
-      module Type = struct
-        type t =
-          | Metadata of MediaMetadata.Type.t
-          | Pending
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SymlinkInfo = struct
-      module Type = struct
-        type t = {target : string} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module FileSharingInfo = struct
-      module Type = struct
-        type t =
-          { read_only : bool
-          ; parent_shared_folder_id : string
-          ; modified_by : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ExportInfo = struct
-      module Type = struct
-        type t = {export_as : string option [@default None]} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module FileLockMetadata = struct
-      module Type = struct
-        type t =
-          { is_lockholder : bool option [@default None]
-          ; lockholder_name : string option [@default None]
-          ; lockholder_account_id : string option [@default None]
-          ; created : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module FileMetadata = struct
-      module Type = struct
-        type t =
-          { name : string
-          ; id : string
-          ; client_modified : string
-          ; server_modified : string
-          ; rev : string
-          ; size : Int64.t
-          ; path_lower : string option [@default None]
-          ; path_display : string option [@default None]
-          ; parent_shared_folder_id : string option [@default None]
-          ; media_info : MediaInfo.Type.t option [@default None]
-          ; symlink_info : SymlinkInfo.Type.t option [@default None]
-          ; sharing_info : FileSharingInfo.Type.t option [@default None]
-          ; is_downloadable : bool
-          ; export_info : ExportInfo.Type.t option [@default None]
-          ; property_groups : PropertyGroup.Type.t list option [@default None]
-          ; has_explicit_shared_members : bool option [@default None]
-          ; content_hash : string option [@default None]
-          ; file_lock_info : FileLockMetadata.Type.t option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module FolderSharingInfo = struct
-      module Type = struct
-        type t =
-          { read_only : bool
-          ; parent_shared_folder_id : string option [@default None]
-          ; shared_folder_id : string option [@default None]
-          ; traverse_only : bool
-          ; no_access : bool }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module FolderMetadata = struct
-      module Type = struct
-        type t =
-          { name : string
-          ; id : string
-          ; path_lower : string option [@default None]
-          ; path_display : string option [@default None]
-          ; parent_shared_folder_id : string option [@default None]
-          ; shared_folder_id : string option [@default None]
-          ; sharing_info : FolderSharingInfo.Type.t option [@default None]
-          ; property_groups : PropertyGroup.Type.t list option [@default None]
-          }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module DownloadZipResult = struct
-      module Type = struct
-        type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module DownloadZipError = struct
-      module Type = struct
-        type t =
-          | Path of LookupError.Type.t
-          | Too_large
-          | Too_many_files
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Path path -> LookupError.to_string path
-        | Type.Too_large -> "Too large"
-        | Type.Too_many_files -> "Too many files"
-    end
-
-    module SharedLinkFileInfo = struct
-      module Type = struct
-        type t =
-          { url : string
-          ; path : string option [@default None]
-          ; password : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module PathOrLink = struct
-      module Type = struct
-        type t =
-          | Path of string
-          | Link of SharedLinkFileInfo.Type.t
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ThumbnailFormat = struct
-      module Type = struct
-        type t =
-          | Jpeg
-          | Png
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ThumbnailSize = struct
-      module Type = struct
-        type t =
-          | W32H32
-          | W64H64
-          | W128H128
-          | W256H256
-          | W480H320
-          | W640H480
-          | W960H640
-          | W1024H768
-          | W2048H1536
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ThumbnailMode = struct
-      module Type = struct
-        type t =
-          | Strict
-          | Bestfit
-          | Fitone_bestfit
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ThumbnailV2Arg = struct
-      module Type = struct
-        type t =
-          { resource : PathOrLink.Type.t
-          ; format : ThumbnailFormat.Type.t
-          ; size : ThumbnailSize.Type.t
-          ; mode : ThumbnailMode.Type.t }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module MinimalFileLinkMetadata = struct
-      module Type = struct
-        type t =
-          { url : string
-          ; rev : string
-          ; id : string option [@default None]
-          ; path : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module PreviewResult = struct
-      module Type = struct
-        type t =
-          { file_metadata : FileMetadata.Type.t option [@default None]
-          ; link_metadata : MinimalFileLinkMetadata.Type.t option
-                [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ThumbnailV2Error = struct
-      module Type = struct
-        type t =
-          | Access_denied
-          | Conversion_error
-          | Not_found
-          | Path of LookupError.Type.t
-          | Unsupported_extension
-          | Unsupported_image
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Access_denied -> "Access denied"
-        | Type.Conversion_error -> "Conversion error"
-        | Type.Not_found -> "Not found"
-        | Type.Path v -> "Path error: " ^ LookupError.to_string v
-        | Type.Unsupported_extension -> "Unsupported extension"
-        | Type.Unsupported_image -> "Unsupported image"
-    end
-
-    module SharedLink = struct
-      module Type = struct
-        type t =
-          { url : string
-          ; password : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module TemplateFilterBase = struct
-      module Type = struct
-        type t = Filter_some of string list [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ListFolderArg = struct
-      module Type = struct
-        type t =
-          { path : string
-          ; recursive : bool
-          ; include_media_info : bool
-          ; include_deleted : bool
-          ; include_has_explicit_shared_members : bool
-          ; include_mounted_folders : bool
-          ; limit : Int32.t option [@default None]
-          ; shared_link : SharedLink.Type.t option [@default None]
-          ; include_property_groups : TemplateFilterBase.Type.t option
-                [@default None]
-          ; include_non_downloadable_files : bool }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module DeletedMetadata = struct
-      module Type = struct
-        type t =
-          { name : string
-          ; path_lower : string option [@default None]
-          ; path_display : string option [@default None]
-          ; parent_shared_folder_id : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module Metadata = struct
-      module Type = struct
-        type t =
-          | Deleted of DeletedMetadata.Type.t
-          | File of FileMetadata.Type.t
-          | Folder of FolderMetadata.Type.t
-        [@@deriving dropbox {mode = SubType}]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module MetadataV2 = struct
-      module Type = struct
-        type t = Metadata of Metadata.Type.t [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ListFolderResult = struct
-      module Type = struct
-        type t =
-          { entries : Metadata.Type.t list
-          ; cursor : string
-          ; has_more : bool }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module TemplateError = struct
-      module Type = struct
-        type t =
-          | Template_not_found
-          | Restricted_content
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found -> "Template not found"
-        | Type.Restricted_content -> "Restricted content"
-    end
-
-    module ListFolderError = struct
-      module Type = struct
-        type t =
-          | Path of LookupError.Type.t
-          | Template_error of TemplateError.Type.t
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Path p -> LookupError.to_string p
-        | Type.Template_error e -> TemplateError.to_string e
-    end
-
-    module ListFolderContinueArg = struct
-      module Type = struct
-        type t = {cursor : string} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module ListFolderContinueError = struct
-      module Type = struct
-        type t =
-          | Path of LookupError.Type.t
-          | Reset
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Path p -> LookupError.to_string p
-        | Type.Reset -> "Reset"
-    end
-
-    module FileStatus = struct
-      module Type = struct
-        type t =
-          | Active
-          | Deleted
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module FileCategory = struct
-      module Type = struct
-        type t =
-          | Image
-          | Document
-          | PDF
-          | Spreadsheet
-          | Presentation
-          | Audio
-          | Video
-          | Folder
-          | Paper
-          | Other
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SearchMatchFieldOptions = struct
-      module Type = struct
-        type t = {include_highlights : bool} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SearchOptions = struct
-      module Type = struct
-        type t =
-          { path : string option
-          ; max_results : Int64.t
-          ; file_status : FileStatus.Type.t
-          ; filename_only : bool
-          ; file_extensions : string list option
-          ; file_categories : FileCategory.Type.t list option }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SearchV2Arg = struct
-      module Type = struct
-        type t =
-          { query : string
-          ; options : SearchOptions.Type.t option
-          ; match_field_options : SearchMatchFieldOptions.Type.t option }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module HighlightSpan = struct
-      module Type = struct
-        type t =
-          { highlight_str : string
-          ; is_highlighted : bool }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SearchMatchV2 = struct
-      module Type = struct
-        type t =
-          { metadata : MetadataV2.Type.t
-          ; highlight_spans : HighlightSpan.Type.t list option [@default None]
-          }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SearchV2Result = struct
-      module Type = struct
-        type t =
-          { matches : SearchMatchV2.Type.t list
-          ; has_more : bool
-          ; cursor : string option [@default None] }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module SearchError = struct
-      module Type = struct
-        type t =
-          | Path of LookupError.Type.t
-          | Invalid_argument of string option
-          | Internal_error
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Path p -> LookupError.to_string p
-        | Type.Invalid_argument None -> "Invalid argument"
-        | Type.Invalid_argument (Some e) -> "Invalid argument: " ^ e
-        | Type.Internal_error -> "Internal error"
-    end
-
-    module SearchV2ContinueArg = struct
-      module Type = struct
-        type t = {cursor : string} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module CreateFolderArg = struct
-      module Type = struct
-        type t =
-          { path : string
-          ; autorename : bool }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module CreateFolderResult = struct
-      module Type = struct
-        type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module WriteConflictError = struct
-      module Type = struct
-        type t =
-          | File
-          | Folder
-          | File_ancestor
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.File -> "File"
-        | Type.Folder -> "Folder"
-        | Type.File_ancestor -> "File ancestor"
-    end
-
-    module WriteError = struct
-      module Type = struct
-        type t =
-          | Malformed_path of string option
-          | Conflict of WriteConflictError.Type.t
-          | No_write_permission
-          | Insufficient_space
-          | Disallowed_name
-          | Team_folder
-          | Too_many_write_operations
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Malformed_path (Some p) -> "Malformed path: " ^ p
-        | Type.Malformed_path None -> "Malformed path"
-        | Type.Conflict c -> WriteConflictError.to_string c ^ " already exists"
-        | Type.No_write_permission -> "No write permission"
-        | Type.Insufficient_space -> "Insufficient space"
-        | Type.Disallowed_name -> "Disallowed name"
-        | Type.Team_folder -> "Team folder"
-        | Type.Too_many_write_operations -> "Too many write operations"
-    end
-
-    module CreateFolderError = struct
-      module Type = struct
-        type t = Path of WriteError.Type.t [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function Type.Path p -> WriteError.to_string p
-    end
-
-    module DeleteArg = struct
-      module Type = struct
-        type t =
-          { path : string
-          ; parent_rev : string option }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module DeleteResult = struct
-      module Type = struct
-        type t = {metadata : Metadata.Type.t} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module DeleteError = struct
-      module Type = struct
-        type t =
-          | Path_lookup of LookupError.Type.t
-          | Path_write of WriteError.Type.t
-          | Too_many_write_operations
-          | Too_many_files
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Path_lookup p -> LookupError.to_string p
-        | Type.Path_write p -> WriteError.to_string p
-        | Type.Too_many_write_operations -> "Too many write operations"
-        | Type.Too_many_files -> "Too many files"
-    end
-
-    module RelocationArg = struct
-      module Type = struct
-        type t =
-          { from_path : string
-          ; to_path : string
-          ; allow_shared_folder : bool
-          ; autorename : bool
-          ; allow_ownership_transfer : bool }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module RelocationResult = struct
-      module Type = struct
-        type t = {metadata : Metadata.Type.t} [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module RelocationError = struct
-      module Type = struct
-        type t =
-          | From_lookup of LookupError.Type.t
-          | From_write of WriteError.Type.t
-          | To of WriteError.Type.t
-          | Cant_copy_shared_folder
-          | Cant_nest_shared_folder
-          | Cant_move_folder_into_itself
-          | Too_many_files
-          | Duplicated_or_nested_paths
-          | Cant_transfer_ownership
-          | Insufficient_quota
-          | Internal_error
-          | Cant_move_shared_folder
-          | Cant_move_into_vault
-        [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.From_lookup p -> LookupError.to_string p
-        | Type.From_write p -> WriteError.to_string p
-        | Type.To p -> WriteError.to_string p
-        | Type.Cant_copy_shared_folder -> "Can't copy shared folder"
-        | Type.Cant_nest_shared_folder -> "Can't nest shared folder"
-        | Type.Cant_move_folder_into_itself -> "Can't move folder into itself"
-        | Type.Too_many_files -> "Too many files"
-        | Type.Insufficient_quota -> "Insufficient quota"
-        | Type.Duplicated_or_nested_paths -> "Duplicated or nested paths"
-        | Type.Cant_transfer_ownership -> "Can't transfer ownership"
-        | Type.Internal_error -> "Internal error"
-        | Type.Cant_move_shared_folder -> "Can't move shared folder"
-        | Type.Cant_move_into_vault -> "Can't move into vault"
-    end
-
-    module GetMetadataArg = struct
-      module Type = struct
-        type t =
-          { path : string
-          ; include_media_info : bool
-          ; include_deleted : bool
-          ; include_has_explicit_shared_members : bool
-          ; include_property_groups : TemplateFilterBase.Type.t option }
-        [@@deriving yojson]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module GetMetadataError = struct
-      module Type = struct
-        type t = Path of LookupError.Type.t [@@deriving dropbox]
-      end
-
-      module Json = Json.Make (Type)
-
-      let to_string = function Type.Path p -> LookupError.to_string p
-    end
-  end
+  module Protocol = Files_protocol
 
   (*
    * Copy.
@@ -838,41 +34,85 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Copy batch.
    *)
 
-  let copy_batch_uri = Root.api "/files/copy_batch_v2"
+  module CopyBatch = struct
+    module Arg = Protocol.RelocationBatchArgBase
+    module Result = Protocol.RelocationBatchV2Launch
+    module Error = Error.Make (Error.Void)
 
-  let copy_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/copy_batch_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let copy_batch ~session ?(autorename = false) entries =
+    let request = CopyBatch.Arg.Type.{entries; autorename}
+    and headers = Session.headers session in
+    CopyBatch.Fn.call ~headers request
 
   (*
    * Copy batch check.
    *)
 
-  let copy_batch_check_uri = Root.api "/files/copy_batch/check_v2"
+  module CopyBatchCheck = struct
+    module Arg = Protocol.PollArg
+    module Result = Protocol.RelocationBatchV2JobStatus
+    module Error = Error.Make (Protocol.PollError)
 
-  let copy_batch_check (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/copy_batch/check_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let copy_batch_check ~session async_job_id =
+    let request = CopyBatchCheck.Arg.Type.{async_job_id}
+    and headers = Session.headers session in
+    CopyBatchCheck.Fn.call ~headers request
 
   (*
    * Copy reference get.
    *)
 
-  let copy_reference_get_uri = Root.api "/files/copy_reference/get"
+  module CopyReferenceGet = struct
+    module Arg = Protocol.GetCopyReferenceArg
+    module Result = Protocol.GetCopyReferenceResult
+    module Error = Error.Make (Protocol.GetCopyReferenceError)
 
-  let copy_reference_get (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/copy_reference/get"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let copy_reference_get ~session path =
+    let request = CopyReferenceGet.Arg.Type.{path}
+    and headers = Session.headers session in
+    CopyReferenceGet.Fn.call ~headers request
 
   (*
    * Copy reference save.
    *)
 
-  let copy_reference_save_uri = Root.api "/files/copy_reference/save"
+  module CopyReferenceSave = struct
+    module Arg = Protocol.SaveCopyReferenceArg
+    module Result = Protocol.SaveCopyReferenceResult
+    module Error = Error.Make (Protocol.SaveCopyReferenceError)
 
-  let copy_reference_save (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/copy_reference/save"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let copy_reference_save ~session copy_reference path =
+    let request = CopyReferenceSave.Arg.Type.{copy_reference; path}
+    and headers = Session.headers session in
+    CopyReferenceSave.Fn.call ~headers request
 
   (*
    * Create folder.
@@ -891,30 +131,52 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   end
 
   let create_folder ~session path =
-    let request = CreateFolder.Arg.Type.{path; autorename = false} in
-    let headers = Session.headers session in
+    let request = CreateFolder.Arg.Type.{path; autorename = false}
+    and headers = Session.headers session in
     CreateFolder.Fn.call ~headers request
 
   (*
    * Create folder batch.
    *)
 
-  let create_folder_batch_uri = Root.api "/files/create_folder_batch"
+  module CreateFolderBatch = struct
+    module Arg = Protocol.CreateFolderBatchArg
+    module Result = Protocol.CreateFolderBatchLaunch
+    module Error = Error.Make (Error.Void)
 
-  let create_folder_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/create_folder_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let create_folder_batch ~session ?(autorename = false) ?(force_async = false)
+      paths =
+    let request = CreateFolderBatch.Arg.Type.{paths; autorename; force_async}
+    and headers = Session.headers session in
+    CreateFolderBatch.Fn.call ~headers request
 
   (*
    * Create folder batch check.
    *)
 
-  let create_folder_batch_check_uri =
-    Root.api "/files/create_folder_batch/check"
+  module CreateFolderBatchCheck = struct
+    module Arg = Protocol.PollArg
+    module Result = Protocol.CreateFolderBatchJobStatus
+    module Error = Error.Make (Protocol.PollError)
 
-  let create_folder_batch_check (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/create_folder_batch/check"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let create_folder_batch_check ~session async_job_id =
+    let request = CreateFolderBatchCheck.Arg.Type.{async_job_id}
+    and headers = Session.headers session in
+    CreateFolderBatchCheck.Fn.call ~headers request
 
   (*
    * Delete.
@@ -933,29 +195,51 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   end
 
   let delete ~session path =
-    let request = Delete.Arg.Type.{path; parent_rev = None} in
-    let headers = Session.headers session in
+    let request = Delete.Arg.Type.{path; parent_rev = None}
+    and headers = Session.headers session in
     Delete.Fn.call ~headers request
 
   (*
    * Delete batch.
    *)
 
-  let delete_batch_uri = Root.api "/files/delete_batch"
+  module DeleteBatch = struct
+    module Arg = Protocol.DeleteBatchArg
+    module Result = Protocol.DeleteBatchLaunch
+    module Error = Error.Make (Error.Void)
 
-  let delete_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/delete_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let delete_batch ~session entries =
+    let request = DeleteBatch.Arg.Type.{entries}
+    and headers = Session.headers session in
+    DeleteBatch.Fn.call ~headers request
 
   (*
    * Delete batch check.
    *)
 
-  let delete_batch_check_uri = Root.api "/files/delete_batch/check"
+  module DeleteBatchCheck = struct
+    module Arg = Protocol.PollArg
+    module Result = Protocol.DeleteBatchJobStatus
+    module Error = Error.Make (Protocol.PollError)
 
-  let delete_batch_check (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/delete_batch/check"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let delete_batch_check ~session async_job_id =
+    let request = DeleteBatchCheck.Arg.Type.{async_job_id}
+    and headers = Session.headers session in
+    DeleteBatchCheck.Fn.call ~headers request
 
   (*
    * Download.
@@ -1001,21 +285,43 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Export.
    *)
 
-  let export_uri = Root.content "/files/export"
+  module Export = struct
+    module Arg = Protocol.ExportArg
+    module Result = Protocol.ExportResult
+    module Error = Error.Make (Protocol.ExportError)
 
-  let export (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.content "/files/export"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let export ~session path =
+    let request = Export.Arg.Type.{path}
+    and headers = Session.headers session in
+    Export.Fn.call ~headers request
 
   (*
    * Get file lock batch.
    *)
 
-  let get_file_lock_batch_uri = Root.api "/files/get_file_lock_batch"
+  module GetFileLockBatch = struct
+    module Arg = Protocol.LockFileBatchArg
+    module Result = Protocol.LockFileBatchResult
+    module Error = Error.Make (Protocol.LockFileError)
 
-  let get_file_lock_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/get_file_lock_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_file_lock_batch ~session entries =
+    let request = GetFileLockBatch.Arg.Type.{entries}
+    and headers = Session.headers session in
+    GetFileLockBatch.Fn.call ~headers request
 
   (*
    * Get metadata.
