@@ -1272,27 +1272,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     Lwt.return_error Error.Not_implemented
 
   (*
-   * Search continue.
-   *)
-
-  module SearchContinue = struct
-    module Arg = Protocol.SearchV2ContinueArg
-    module Result = Protocol.SearchV2Result
-    module Error = Error.Make (Protocol.SearchError)
-
-    module Info = struct
-      let uri = Root.api "/files/search/continue_v2"
-    end
-
-    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
-  end
-
-  let search_continue ~session cursor =
-    let request = SearchContinue.Arg.Type.{cursor} in
-    let headers = Session.headers session in
-    SearchContinue.Fn.call ~headers request
-
-  (*
    * Search.
    *)
 
@@ -1324,6 +1303,27 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     let request = Search.Arg.Type.{query; options; match_field_options = None} in
     let headers = Session.headers session in
     Search.Fn.call ~headers request
+
+  (*
+   * Search continue.
+   *)
+
+  module SearchContinue = struct
+    module Arg = Protocol.SearchV2ContinueArg
+    module Result = Protocol.SearchV2Result
+    module Error = Error.Make (Protocol.SearchError)
+
+    module Info = struct
+      let uri = Root.api "/files/search/continue_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let search_continue ~session cursor =
+    let request = SearchContinue.Arg.Type.{cursor} in
+    let headers = Session.headers session in
+    SearchContinue.Fn.call ~headers request
 
   (*
    * Unlock file batch.
