@@ -1091,7 +1091,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = ContentDownload.Function (C) (Arg) (Result) (Error) (Info)
   end
 
-  let get_thumbnail ~format ~size ~mode ~session resource =
+  let get_thumbnail ~session ~format ~size ~mode resource =
     let request = GetThumbnail.Arg.Type.{resource; format; size; mode} in
     let headers = Session.headers session in
     GetThumbnail.Fn.call ~headers request
@@ -1105,27 +1105,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_thumbnail_batch (_ : Session.Type.t) =
     let module Error = Error.Make (Error.Void) in
     Lwt.return_error Error.Not_implemented
-
-  (*
-   * List folder continue.
-   *)
-
-  module ListFolderContinue = struct
-    module Arg = Protocol.ListFolderContinueArg
-    module Result = Protocol.ListFolderResult
-    module Error = Error.Make (Protocol.ListFolderContinueError)
-
-    module Info = struct
-      let uri = Root.api "/files/list_folder/continue"
-    end
-
-    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
-  end
-
-  let list_folder_continue ~session cursor =
-    let arg = ListFolderContinue.Arg.Type.{cursor} in
-    let headers = Session.headers session in
-    ListFolderContinue.Fn.call ~headers arg
 
   (*
    * List folder.
@@ -1158,6 +1137,27 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         ; include_non_downloadable_files = false } in
     let headers = Session.headers session in
     ListFolder.Fn.call ~headers arg
+
+  (*
+   * List folder continue.
+   *)
+
+  module ListFolderContinue = struct
+    module Arg = Protocol.ListFolderContinueArg
+    module Result = Protocol.ListFolderResult
+    module Error = Error.Make (Protocol.ListFolderContinueError)
+
+    module Info = struct
+      let uri = Root.api "/files/list_folder/continue"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let list_folder_continue ~session cursor =
+    let arg = ListFolderContinue.Arg.Type.{cursor} in
+    let headers = Session.headers session in
+    ListFolderContinue.Fn.call ~headers arg
 
   (*
    * List folder get latest cursor.
@@ -1308,7 +1308,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
   end
 
-  let search ?path ?(max_results = 100L) ~session query =
+  let search ~session ?path ?(max_results = 100L) query =
     let options =
       match path with
       | Some path ->

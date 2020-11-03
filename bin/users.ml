@@ -28,9 +28,9 @@ let () =
    *)
   let session = Dropbox.Session.make token in
   let op =
-    Users.get_current_account session
+    Users.get_current_account ~session ()
     >>=? fun Users.GetCurrentAccount.Result.Type.{name = {display_name; _}; _} ->
-    Users.get_space_usage session
+    Users.get_space_usage ~session ()
     >>=? fun Users.GetSpaceUsage.Result.Type.
                {used; allocation = {allocated; _}; _} ->
     Logs_lwt.app (fun m -> m "%s, %Ld/%Ld" display_name used allocated)

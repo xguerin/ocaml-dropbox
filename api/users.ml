@@ -220,7 +220,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = Supplier (C) (Result) (Error) (Info)
   end
 
-  let get_current_account session =
+  let get_current_account ~session () =
     let headers = Session.headers session in
     GetCurrentAccount.Fn.call ~headers ()
 
@@ -239,7 +239,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = Supplier (C) (Result) (Error) (Info)
   end
 
-  let get_space_usage session =
+  let get_space_usage ~session () =
     let headers = Session.headers session in
     GetSpaceUsage.Fn.call ~headers ()
 end

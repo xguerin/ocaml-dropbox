@@ -27,13 +27,13 @@ let () =
    *)
   match (!aid_opt, !scr_opt, !tkn_opt) with
   | Some id, Some secret, None -> (
-    let op = Check.app ~id ~secret () in
+    let op = Check.app id secret in
     match Lwt_main.run op with
     | Ok _ -> Logs.app (fun m -> m "Success")
     | Error err -> Logs.err (fun m -> m "%a" Check.App.Error.pp err))
   | None, None, Some token -> (
     let session = Dropbox.Session.make token in
-    let op = Check.user session in
+    let op = Check.user ~session () in
     match Lwt_main.run op with
     | Ok _ -> Logs.app (fun m -> m "Success")
     | Error err -> Logs.err (fun m -> m "%a" Check.User.Error.pp err))

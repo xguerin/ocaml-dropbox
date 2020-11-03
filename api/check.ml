@@ -52,7 +52,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = Function (C) (Query) (Result) (Error) (Info)
   end
 
-  let app ~id ~secret () =
+  let app id secret =
     let basic = "Basic " ^ Base64.encode_string (id ^ ":" ^ secret) in
     let headers = Header.init_with "Authorization" basic in
     App.Fn.call ~headers {query = "Hello, world!"} >>=? check App.Error.Unknown
@@ -73,7 +73,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = Function (C) (Query) (Result) (Error) (Info)
   end
 
-  let user session =
+  let user ~session () =
     let headers = Session.headers session in
     User.Fn.call ~headers {query = "Hello, world!"}
     >>=? check User.Error.Unknown
