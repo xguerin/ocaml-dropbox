@@ -1,0 +1,5 @@
+(test
+ (name basic)
+ (libraries yojson)
+ (preprocess
+  (pps ppx_deriving_dropbox)))

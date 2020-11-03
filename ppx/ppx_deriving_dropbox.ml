@@ -133,6 +133,41 @@ module OfYojson = struct
             match [%e Exp.apply of_yojson [(Nolabel, evar lc_name)]] with
             | Ok v -> Ok [%e Exp.construct (lid name) (Some (evar "v"))]
             | Error _ as e -> e] ]
+    (* Variant constructor with a Type.t option argument *)
+    | { pcd_name = {txt = name; _}
+      ; pcd_loc = loc
+      ; pcd_args =
+          Pcstr_tuple
+            [ { ptyp_desc =
+                  Ptyp_constr
+                    ( {txt = Lident "option"; _}
+                    , [ { ptyp_desc = Ptyp_constr ({txt = Ldot (base, _); _}, _)
+                        ; _ } ] )
+              ; _ } ]
+      ; _ } ->
+      let of_yojson = Exp.ident {txt = Ldot (base, "of_yojson"); loc} in
+      let lc_name = String.lowercase_ascii name in
+      [ Exp.case
+          [%pat? `Assoc [([%p pstr ".tag"], `String [%p pstr lc_name])]]
+          [%expr
+            Ok
+              [%e
+                Exp.construct (lid name)
+                  (Some (Exp.construct (lid "None") None))]]
+      ; Exp.case
+          [%pat?
+            `Assoc
+              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
+              ; ([%p pstr lc_name], [%p pvar lc_name]) ]]
+          [%expr
+            match [%e Exp.apply of_yojson [(Nolabel, evar lc_name)]] with
+            | Ok v ->
+              Ok
+                [%e
+                  Exp.construct (lid name)
+                    (Some (Exp.construct (lid "Some") (Some (evar "v"))))]
+            | Error _ as e -> e] ]
+    (* Error *)
     | {pcd_name = {loc; _}; _} ->
       raise ~loc "[dropbox] invalid Union constructor"
 
@@ -280,6 +315,27 @@ module ToYojson = struct
       [ Exp.case
           (Pat.construct (lid name) (Some (pvar lc_name)))
           (make_yojson_as_union ~loc to_yojson lc_name) ]
+    (* Variant constructor with a Type.t option argument *)
+    | { pcd_name = {txt = name; _}
+      ; pcd_loc = loc
+      ; pcd_args =
+          Pcstr_tuple
+            [ { ptyp_desc =
+                  Ptyp_constr
+                    ( {txt = Lident "option"; _}
+                    , [ { ptyp_desc = Ptyp_constr ({txt = Ldot (base, _); _}, _)
+                        ; _ } ] )
+              ; _ } ]
+      ; _ } ->
+      let to_yojson = Exp.ident {txt = Ldot (base, "to_yojson"); loc} in
+      let lc_name = String.lowercase_ascii name in
+      [ Exp.case
+          (Pat.construct (lid name)
+             (Some (Pat.construct (lid "Some") (Some (pvar lc_name)))))
+          (make_yojson_as_union ~loc to_yojson lc_name)
+      ; Exp.case
+          (Pat.construct (lid name) (Some (Pat.construct (lid "None") None)))
+          (make_tagged_string_none ~loc lc_name) ]
     | {pcd_name = {loc; _}; _} ->
       raise ~loc "[dropbox] invalid Union constructor"
 
