@@ -374,22 +374,41 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Get temporary link.
    *)
 
-  let get_temporary_link_uri = Root.api "/files/get_temporary_link"
+  module GetTemporaryLink = struct
+    module Arg = Protocol.GetTemporaryLinkArg
+    module Result = Protocol.GetTemporaryLinkResult
+    module Error = Error.Make (Protocol.GetTemporaryLinkError)
 
-  let get_temporary_link (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/get_temporary_link"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_temporary_link ~session path =
+    let headers = Session.headers session in
+    GetTemporaryLink.Fn.call ~headers {path}
 
   (*
    * Get temporary upload link.
    *)
 
-  let get_temporary_upload_link_uri =
-    Root.api "/files/get_temporary_upload_link"
+  module GetTemporaryLinkUpload = struct
+    module Arg = Protocol.GetTemporaryUpoadLinkArg
+    module Result = Protocol.GetTemporaryUpoadLinkResult
+    module Error = Error.Make (Error.Void)
 
-  let get_temporary_upload_link (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/get_temporary_upload_link"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_temporary_upload_link ~session commit_info duration =
+    let headers = Session.headers session in
+    GetTemporaryLinkUpload.Fn.call ~headers {commit_info; duration}
 
   (*
    * Get thumbnail.

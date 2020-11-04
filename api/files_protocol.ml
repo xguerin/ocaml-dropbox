@@ -1176,3 +1176,81 @@ module PreviewError = struct
 
   module Json = Json.Make (Type)
 end
+
+module GetTemporaryLinkArg = struct
+  module Type = struct
+    type t = {path : string} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetTemporaryLinkResult = struct
+  module Type = struct
+    type t =
+      { metadata : FileMetadata.Type.t
+      ; link : string }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetTemporaryLinkError = struct
+  module Type = struct
+    type t =
+      | Path of LookupError.Type.t
+      | Email_not_verified
+      | Unsupported_file
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module WriteMode = struct
+  module Type = struct
+    type t =
+      | Add
+      | Overwrite
+      | Update of string
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module CommitInfo = struct
+  module Type = struct
+    type t =
+      { path : string
+      ; mode : WriteMode.Type.t
+      ; autorename : bool
+      ; client_modified : string option
+      ; mute : bool
+      ; property_groups : PropertyGroup.Type.t list option
+      ; strict_conflict : bool }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetTemporaryUpoadLinkArg = struct
+  module Type = struct
+    type t =
+      { commit_info : CommitInfo.Type.t
+      ; duration : float }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetTemporaryUpoadLinkResult = struct
+  module Type = struct
+    type t = {link : string} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
