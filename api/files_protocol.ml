@@ -1252,3 +1252,33 @@ module LockFileBatchResult = struct
 
   module Json = Json.Make (Type)
 end
+
+module PreviewArg = struct
+  module Type = struct
+    type t =
+      { path : string
+      ; rev : string option }
+    [@@deriving yojson]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module PreviewError = struct
+  module Type = struct
+    type t =
+      | Path of LookupError.Type.t
+      | In_progress
+      | Unsupported_extension
+      | Unsupported_content
+    [@@deriving dropbox]
+  end
+
+  module Json = Json.Make (Type)
+
+  let to_string = function
+    | Type.Path e -> "Path: " ^ LookupError.to_string e
+    | Type.In_progress -> "In progress"
+    | Type.Unsupported_extension -> "Unsupported extension"
+    | Type.Unsupported_content -> "Unsupported content"
+end

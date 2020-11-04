@@ -354,11 +354,21 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Get preview.
    *)
 
-  let get_preview_uri = Root.content "/files/get_preview"
+  module GetPreview = struct
+    module Arg = Protocol.PreviewArg
+    module Result = Protocol.FileMetadata
+    module Error = Error.Make (Protocol.PreviewError)
 
-  let get_preview (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.content "/files/get_preview"
+    end
+
+    module Fn = ContentDownload.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_preview ~session ?rev path =
+    let headers = Session.headers session in
+    GetPreview.Fn.call ~headers {path; rev}
 
   (*
    * Get temporary link.
