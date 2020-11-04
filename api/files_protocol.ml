@@ -1,4 +1,4 @@
-open Common.Protocol
+open Common_protocol
 
 module DownloadArg = struct
   module Type = struct
@@ -14,175 +14,6 @@ module DownloadError = struct
       | Path of LookupError.Type.t
       | Unsupported_file
     [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module Dimensions = struct
-  module Type = struct
-    type t =
-      { height : Int64.t
-      ; width : Int64.t }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module GpsCoordinates = struct
-  module Type = struct
-    type t =
-      { latitude : float
-      ; longitude : float }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module PhotoMetadata = struct
-  module Type = struct
-    type t =
-      { dimensions : Dimensions.Type.t option [@default None]
-      ; location : Dimensions.Type.t option [@default None]
-      ; time_taken : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module VideoMetadata = struct
-  module Type = struct
-    type t =
-      { dimensions : Dimensions.Type.t option [@default None]
-      ; location : Dimensions.Type.t option [@default None]
-      ; time_taken : string option [@default None]
-      ; duration : Int64.t option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module MediaMetadata = struct
-  module Type = struct
-    type t =
-      | Photo of PhotoMetadata.Type.t
-      | Video of VideoMetadata.Type.t
-    [@@deriving dropbox {mode = SubType}, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module MediaInfo = struct
-  module Type = struct
-    type t =
-      | Metadata of MediaMetadata.Type.t
-      | Pending
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module SymlinkInfo = struct
-  module Type = struct
-    type t = {target : string} [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FileSharingInfo = struct
-  module Type = struct
-    type t =
-      { read_only : bool
-      ; parent_shared_folder_id : string
-      ; modified_by : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module ExportInfo = struct
-  module Type = struct
-    type t = {export_as : string option [@default None]}
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FileLockMetadata = struct
-  module Type = struct
-    type t =
-      { is_lockholder : bool option [@default None]
-      ; lockholder_name : string option [@default None]
-      ; lockholder_account_id : string option [@default None]
-      ; created : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FileMetadata = struct
-  module Type = struct
-    type t =
-      { name : string
-      ; id : string
-      ; client_modified : string
-      ; server_modified : string
-      ; rev : string
-      ; size : Int64.t
-      ; path_lower : string option [@default None]
-      ; path_display : string option [@default None]
-      ; parent_shared_folder_id : string option [@default None]
-      ; media_info : MediaInfo.Type.t option [@default None]
-      ; symlink_info : SymlinkInfo.Type.t option [@default None]
-      ; sharing_info : FileSharingInfo.Type.t option [@default None]
-      ; is_downloadable : bool
-      ; export_info : ExportInfo.Type.t option [@default None]
-      ; property_groups : PropertyGroup.Type.t list option [@default None]
-      ; has_explicit_shared_members : bool option [@default None]
-      ; content_hash : string option [@default None]
-      ; file_lock_info : FileLockMetadata.Type.t option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FolderSharingInfo = struct
-  module Type = struct
-    type t =
-      { read_only : bool
-      ; parent_shared_folder_id : string option [@default None]
-      ; shared_folder_id : string option [@default None]
-      ; traverse_only : bool
-      ; no_access : bool }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FolderMetadata = struct
-  module Type = struct
-    type t =
-      { name : string
-      ; id : string
-      ; path_lower : string option [@default None]
-      ; path_display : string option [@default None]
-      ; parent_shared_folder_id : string option [@default None]
-      ; shared_folder_id : string option [@default None]
-      ; sharing_info : FolderSharingInfo.Type.t option [@default None]
-      ; property_groups : PropertyGroup.Type.t list option [@default None] }
-    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -208,70 +39,6 @@ module DownloadZipError = struct
   module Json = Json.Make (Type)
 end
 
-module SharedLinkFileInfo = struct
-  module Type = struct
-    type t =
-      { url : string
-      ; path : string option [@default None]
-      ; password : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module PathOrLink = struct
-  module Type = struct
-    type t =
-      | Path of string
-      | Link of SharedLinkFileInfo.Type.t
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module ThumbnailFormat = struct
-  module Type = struct
-    type t =
-      | Jpeg
-      | Png
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module ThumbnailSize = struct
-  module Type = struct
-    type t =
-      | W32H32
-      | W64H64
-      | W128H128
-      | W256H256
-      | W480H320
-      | W640H480
-      | W960H640
-      | W1024H768
-      | W2048H1536
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module ThumbnailMode = struct
-  module Type = struct
-    type t =
-      | Strict
-      | Bestfit
-      | Fitone_bestfit
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
 module ThumbnailV2Arg = struct
   module Type = struct
     type t =
@@ -279,30 +46,6 @@ module ThumbnailV2Arg = struct
       ; format : ThumbnailFormat.Type.t
       ; size : ThumbnailSize.Type.t
       ; mode : ThumbnailMode.Type.t }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module MinimalFileLinkMetadata = struct
-  module Type = struct
-    type t =
-      { url : string
-      ; rev : string
-      ; id : string option [@default None]
-      ; path : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module PreviewResult = struct
-  module Type = struct
-    type t =
-      { file_metadata : FileMetadata.Type.t option [@default None]
-      ; link_metadata : MinimalFileLinkMetadata.Type.t option [@default None] }
     [@@deriving yojson, show]
   end
 
@@ -324,25 +67,6 @@ module ThumbnailV2Error = struct
   module Json = Json.Make (Type)
 end
 
-module SharedLink = struct
-  module Type = struct
-    type t =
-      { url : string
-      ; password : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module TemplateFilterBase = struct
-  module Type = struct
-    type t = Filter_some of string list [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
 module ListFolderArg = struct
   module Type = struct
     type t =
@@ -358,39 +82,6 @@ module ListFolderArg = struct
             [@default None]
       ; include_non_downloadable_files : bool }
     [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module DeletedMetadata = struct
-  module Type = struct
-    type t =
-      { name : string
-      ; path_lower : string option [@default None]
-      ; path_display : string option [@default None]
-      ; parent_shared_folder_id : string option [@default None] }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module Metadata = struct
-  module Type = struct
-    type t =
-      | Deleted of DeletedMetadata.Type.t
-      | File of FileMetadata.Type.t
-      | Folder of FolderMetadata.Type.t
-    [@@deriving dropbox {mode = SubType}, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module MetadataV2 = struct
-  module Type = struct
-    type t = Metadata of Metadata.Type.t [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -449,87 +140,12 @@ module ListFolderContinueError = struct
   module Json = Json.Make (Type)
 end
 
-module FileStatus = struct
-  module Type = struct
-    type t =
-      | Active
-      | Deleted
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FileCategory = struct
-  module Type = struct
-    type t =
-      | Image
-      | Document
-      | PDF
-      | Spreadsheet
-      | Presentation
-      | Audio
-      | Video
-      | Folder
-      | Paper
-      | Other
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module SearchMatchFieldOptions = struct
-  module Type = struct
-    type t = {include_highlights : bool} [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module SearchOptions = struct
-  module Type = struct
-    type t =
-      { path : string option
-      ; max_results : Int64.t
-      ; file_status : FileStatus.Type.t
-      ; filename_only : bool
-      ; file_extensions : string list option
-      ; file_categories : FileCategory.Type.t list option }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
 module SearchV2Arg = struct
   module Type = struct
     type t =
       { query : string
       ; options : SearchOptions.Type.t option
       ; match_field_options : SearchMatchFieldOptions.Type.t option }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module HighlightSpan = struct
-  module Type = struct
-    type t =
-      { highlight_str : string
-      ; is_highlighted : bool }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module SearchMatchV2 = struct
-  module Type = struct
-    type t =
-      { metadata : MetadataV2.Type.t
-      ; highlight_spans : HighlightSpan.Type.t list option [@default None] }
     [@@deriving yojson, show]
   end
 
@@ -582,34 +198,6 @@ end
 module CreateFolderResult = struct
   module Type = struct
     type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module WriteConflictError = struct
-  module Type = struct
-    type t =
-      | File
-      | Folder
-      | File_ancestor
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module WriteError = struct
-  module Type = struct
-    type t =
-      | Malformed_path of string option
-      | Conflict of WriteConflictError.Type.t
-      | No_write_permission
-      | Insufficient_space
-      | Disallowed_name
-      | Team_folder
-      | Too_many_write_operations
-    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -684,17 +272,6 @@ end
 module GetMetadataError = struct
   module Type = struct
     type t = Path of LookupError.Type.t [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module RelocationPath = struct
-  module Type = struct
-    type t =
-      { from_path : string
-      ; to_path : string }
-    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1015,18 +592,6 @@ module ExportArg = struct
   module Json = Json.Make (Type)
 end
 
-module ExportMetadata = struct
-  module Type = struct
-    type t =
-      { name : string
-      ; size : Int64.t
-      ; export_hash : string option }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
 module ExportResult = struct
   module Type = struct
     type t =
@@ -1061,37 +626,6 @@ end
 module LockFileBatchArg = struct
   module Type = struct
     type t = {entries : LockFileArg.Type.t} [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module SingleUserLock = struct
-  module Type = struct
-    type t =
-      { created : string
-      ; lock_holder_account_id : string
-      ; lock_holder_team_id : string option }
-    [@@deriving yojson, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FileLockContent = struct
-  module Type = struct
-    type t =
-      | Unlocked
-      | Single_user of SingleUserLock.Type.t
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module FileLock = struct
-  module Type = struct
-    type t = {content : FileLockContent.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1203,34 +737,6 @@ module GetTemporaryLinkError = struct
       | Email_not_verified
       | Unsupported_file
     [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module WriteMode = struct
-  module Type = struct
-    type t =
-      | Add
-      | Overwrite
-      | Update of string
-    [@@deriving dropbox, show]
-  end
-
-  module Json = Json.Make (Type)
-end
-
-module CommitInfo = struct
-  module Type = struct
-    type t =
-      { path : string
-      ; mode : WriteMode.Type.t
-      ; autorename : bool
-      ; client_modified : string option
-      ; mute : bool
-      ; property_groups : PropertyGroup.Type.t list option
-      ; strict_conflict : bool }
-    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)

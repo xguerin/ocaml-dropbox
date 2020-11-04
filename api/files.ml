@@ -1,7 +1,14 @@
 open Endpoint
 
 module Make (C : Cohttp_lwt.S.Client) = struct
-  module Protocol = Files_protocol
+  (*
+   * Protocol.
+   *)
+
+  module Protocol = struct
+    include Common_protocol
+    include Files_protocol
+  end
 
   (*
    * Copy.

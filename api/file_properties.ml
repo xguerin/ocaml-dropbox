@@ -6,7 +6,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Protocol = struct
-    open Common.Protocol
+    open Common_protocol
 
     module AddPropertiesArg = struct
       module Type = struct
