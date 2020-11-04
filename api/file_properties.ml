@@ -13,7 +13,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { path : string
           ; property_groups : PropertyGroup.Type.t list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -30,20 +30,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Does_not_fit_template
           | Duplicate_property_groups
           | Property_group_already_exists
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found e -> "Template not found: " ^ e
-        | Type.Restricted_content -> "Restricted content"
-        | Type.Lookup_error e -> "Lookup error: " ^ LookupError.to_string e
-        | Type.Unsupported_folder -> "Unsupported folder"
-        | Type.Property_field_too_large -> "Property field too large"
-        | Type.Does_not_fit_template -> "Does not fit template"
-        | Type.Duplicate_property_groups -> "Duplicate property groups"
-        | Type.Property_group_already_exists -> "Property group already exists"
     end
 
     module OverwritePropertyGroupArg = struct
@@ -51,7 +41,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { path : string
           ; property_groups : PropertyGroup.Type.t list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -67,19 +57,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Property_field_too_large
           | Does_not_fit_template
           | Duplicate_property_groups
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found e -> "Template not found: " ^ e
-        | Type.Restricted_content -> "Restricted content"
-        | Type.Path e -> "Path: " ^ LookupError.to_string e
-        | Type.Unsupported_folder -> "Unsupported folder"
-        | Type.Property_field_too_large -> "Property field too large"
-        | Type.Does_not_fit_template -> "Does not fit template"
-        | Type.Duplicate_property_groups -> "Duplicate property groups"
     end
 
     module RemovePropertiesArg = struct
@@ -87,7 +68,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { path : string
           ; property_template_ids : string list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -95,13 +76,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module LookUpPropertiesError = struct
       module Type = struct
-        type t = Property_group_not_found [@@deriving dropbox]
+        type t = Property_group_not_found [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Property_group_not_found -> "Property group not found"
     end
 
     module RemovePropertiesError = struct
@@ -112,23 +90,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Lookup_error of LookupError.Type.t
           | Unsupported_folder
           | Property_group_lookup of LookUpPropertiesError.Type.t
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found e -> "Template not found: " ^ e
-        | Type.Restricted_content -> "Restricted content"
-        | Type.Lookup_error e -> "Lookup error: " ^ LookupError.to_string e
-        | Type.Unsupported_folder -> "Unsupported folder"
-        | Type.Property_group_lookup e ->
-          "Property group lookup: " ^ LookUpPropertiesError.to_string e
     end
 
     module LogicalOperator = struct
       module Type = struct
-        type t = Or_operator [@@deriving dropbox]
+        type t = Or_operator [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -136,7 +106,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module PropertiesSearchMode = struct
       module Type = struct
-        type t = Field_name of string [@@deriving dropbox]
+        type t = Field_name of string [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -147,7 +117,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Filter_some of string list
           | Filter_none
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -159,7 +129,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { query : string
           ; mode : PropertiesSearchMode.Type.t
           ; logical_operator : LogicalOperator.Type.t }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -170,7 +140,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { queries : PropertiesSearchQuery.Type.t list
           ; template_filter : TemplateFilter.Type.t }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -183,7 +153,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; path : string
           ; is_deleted : bool
           ; property_groups : PropertyGroup.Type.t list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -194,7 +164,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { matches : PropertiesSearchMatch.Type.t list
           ; cursor : string }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -203,19 +173,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module PropertiesSearchError = struct
       module Type = struct
         type t = Property_group_lookup of LookUpPropertiesError.Type.t
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Property_group_lookup e ->
-          "Property group lookup: " ^ LookUpPropertiesError.to_string e
     end
 
     module PropertiesSearchContinueArg = struct
       module Type = struct
-        type t = {cursor : string} [@@deriving yojson]
+        type t = {cursor : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -223,12 +189,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module PropertiesSearchContinueError = struct
       module Type = struct
-        type t = Reset [@@deriving dropbox]
+        type t = Reset [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function Type.Reset -> "Reset"
     end
 
     module PropertyGroupUpdate = struct
@@ -237,7 +201,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { template_id : string
           ; add_or_update_fields : PropertyField.Type.t list option
           ; remove_fields : string list option }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -248,7 +212,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { path : string
           ; update_property_groups : PropertyGroupUpdate.Type.t list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -265,21 +229,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Does_not_fit_template
           | Duplicate_property_groups
           | Property_group_lookup of LookUpPropertiesError.Type.t
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found e -> "Template not found: " ^ e
-        | Type.Restricted_content -> "Restricted content"
-        | Type.Lookup_error e -> "Lookup error: " ^ LookupError.to_string e
-        | Type.Unsupported_folder -> "Unsupported folder"
-        | Type.Property_field_too_large -> "Property field too large"
-        | Type.Does_not_fit_template -> "Does not fit template"
-        | Type.Duplicate_property_groups -> "Duplicate property groups"
-        | Type.Property_group_lookup e ->
-          "Property group lookup: " ^ LookUpPropertiesError.to_string e
     end
 
     module AddTemplateArg = struct
@@ -288,7 +241,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { name : string
           ; description : string
           ; fields : PropertyFieldTemplate.Type.t list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -296,7 +249,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module AddTemplateResult = struct
       module Type = struct
-        type t = {template_id : string} [@@deriving yojson]
+        type t = {template_id : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -311,23 +264,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Too_many_properties
           | Too_many_templates
           | Template_attribute_too_large
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found e -> "Template not found: " ^ e
-        | Type.Restricted_content -> "Restricted content"
-        | Type.Conflicting_property_names -> "Conflicting property names"
-        | Type.Too_many_properties -> "Too many properties"
-        | Type.Too_many_templates -> "Too many templates"
-        | Type.Template_attribute_too_large -> "Template attribute too large"
     end
 
     module GetTemplateArg = struct
       module Type = struct
-        type t = {template_id : string} [@@deriving yojson]
+        type t = {template_id : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -339,7 +284,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { name : string
           ; description : string
           ; fields : PropertyFieldTemplate.Type.t list }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -350,19 +295,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Template_not_found of string
           | Restricted_content
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Template_not_found e -> "Template not found: " ^ e
-        | Type.Restricted_content -> "Restricted content"
     end
 
     module ListTemplateResult = struct
       module Type = struct
-        type t = {template_id : string list} [@@deriving yojson]
+        type t = {template_id : string list} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -370,7 +311,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module RemoveTemplateArg = struct
       module Type = struct
-        type t = {template_id : string} [@@deriving yojson]
+        type t = {template_id : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -383,7 +324,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; name : string option
           ; description : string option
           ; add_fields : PropertyFieldTemplate.Type.t list option }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -391,7 +332,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module UpdateTemplateResult = struct
       module Type = struct
-        type t = {template_id : string} [@@deriving yojson]
+        type t = {template_id : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)

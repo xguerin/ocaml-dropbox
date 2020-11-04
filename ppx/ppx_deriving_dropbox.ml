@@ -375,8 +375,8 @@ let str_of_type ~options ~path:_ ({ptype_loc = loc; _} as type_decl) =
   let options = Options.parse options in
   match type_decl.ptype_kind with
   | Ptype_variant constrs ->
-    let of_yojson = OfYojson.gen ~options ~loc constrs in
-    let to_yojson = ToYojson.gen ~options ~loc constrs in
+    let of_yojson = OfYojson.gen ~options ~loc constrs
+    and to_yojson = ToYojson.gen ~options ~loc constrs in
     [ Str.value Nonrecursive [Vb.mk (pvar "of_yojson") of_yojson]
     ; Str.value Nonrecursive [Vb.mk (pvar "to_yojson") to_yojson] ]
   | _ -> raise ~loc "[dropbox] only supports Variant types"

@@ -8,7 +8,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Protocol = struct
     module DeleteManualContactsArg = struct
       module Type = struct
-        type t = {email_addresses : string list} [@@deriving yojson]
+        type t = {email_addresses : string list} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -16,14 +16,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module DeleteManualContactsError = struct
       module Type = struct
-        type t = Contacts_not_found of string list [@@deriving dropbox]
+        type t = Contacts_not_found of string list [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Contacts_not_found contacts ->
-          "Contacts not found: " ^ String.concat "," contacts
     end
   end
 

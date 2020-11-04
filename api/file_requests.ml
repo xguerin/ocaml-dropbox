@@ -10,7 +10,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Protocol = struct
     module CountFileRequestResult = struct
       module Type = struct
-        type t = {file_request_count : Int64.t} [@@deriving yojson]
+        type t = {file_request_count : Int64.t} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -18,12 +18,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module CountFileRequestError = struct
       module Type = struct
-        type t = Disabled_for_team [@@deriving dropbox]
+        type t = Disabled_for_team [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function Type.Disabled_for_team -> "Disabled for team"
     end
 
     module FileRequestDeadline = struct
@@ -31,7 +29,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { deadline : string
           ; allow_late_uploads : (string option[@default None]) }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -45,7 +43,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; deadline : (FileRequestDeadline.Type.t option[@default None])
           ; open_ : bool [@key "open"]
           ; description : string option }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -62,7 +60,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; file_count : Int64.t
           ; destination : string
           ; deadline : (FileRequestDeadline.Type.t option[@default None]) }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -80,26 +78,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Not_found
           | Rate_limit
           | Validation_error
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.App_lacks_access -> "App lacks access"
-        | Type.Disabled_for_team -> "Disabled for team"
-        | Type.Email_unverified -> "Email unverified"
-        | Type.Invalid_location -> "Invalid location"
-        | Type.No_permission -> "No permission"
-        | Type.Not_a_folder -> "Not a folder"
-        | Type.Not_found -> "Not found"
-        | Type.Rate_limit -> "Rate limit"
-        | Type.Validation_error -> "Validation error"
     end
 
     module DeleteFileRequestArgs = struct
       module Type = struct
-        type t = {ids : string list} [@@deriving yojson]
+        type t = {ids : string list} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -107,7 +94,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module DeleteFileRequestResult = struct
       module Type = struct
-        type t = {file_requests : FileRequest.Type.t list} [@@deriving yojson]
+        type t = {file_requests : FileRequest.Type.t list}
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -124,25 +112,16 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Email_unverified
           | Validation_error
           | File_request_open
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Disabled_for_team -> "Disabled for team"
-        | Type.Not_found -> "Not found"
-        | Type.Not_a_folder -> "Not a folder"
-        | Type.App_lacks_access -> "App lacks access"
-        | Type.No_permission -> "No permission"
-        | Type.Email_unverified -> "Email unverified"
-        | Type.Validation_error -> "Validation error"
-        | Type.File_request_open -> "File request open"
     end
 
     module DeleteAllClosedFileRequestsResult = struct
       module Type = struct
-        type t = {file_requests : FileRequest.Type.t list} [@@deriving yojson]
+        type t = {file_requests : FileRequest.Type.t list}
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -158,24 +137,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | No_permission
           | Email_unverified
           | Validation_error
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Disabled_for_team -> "Disabled for team"
-        | Type.Not_found -> "Not found"
-        | Type.Not_a_folder -> "Not a folder"
-        | Type.App_lacks_access -> "App lacks access"
-        | Type.No_permission -> "No permission"
-        | Type.Email_unverified -> "Email unverified"
-        | Type.Validation_error -> "Validation error"
     end
 
     module GetFileRequestArgs = struct
       module Type = struct
-        type t = {id : string} [@@deriving yojson]
+        type t = {id : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -191,24 +161,15 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | No_permission
           | Email_unverified
           | Validation_error
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Disabled_for_team -> "Disabled for team"
-        | Type.Not_found -> "Not found"
-        | Type.Not_a_folder -> "Not a folder"
-        | Type.App_lacks_access -> "App lacks access"
-        | Type.No_permission -> "No permission"
-        | Type.Email_unverified -> "Email unverified"
-        | Type.Validation_error -> "Validation error"
     end
 
     module ListFileRequestsArgs = struct
       module Type = struct
-        type t = {limit : Int64.t} [@@deriving yojson]
+        type t = {limit : Int64.t} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -220,7 +181,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { file_requests : FileRequest.Type.t list
           ; cursor : string
           ; has_more : bool }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -228,12 +189,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module ListFileRequestsError = struct
       module Type = struct
-        type t = Disabled_for_team [@@deriving dropbox]
+        type t = Disabled_for_team [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function Type.Disabled_for_team -> "Disabled for team"
     end
 
     module UpdateFileRequestDeadline = struct
@@ -241,7 +200,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | No_update
           | Update of FileRequestDeadline.Type.t option
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -256,7 +215,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; deadline : UpdateFileRequestDeadline.Type.t
           ; open_ : bool option [@key "open"]
           ; description : string option }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -272,19 +231,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | No_permission
           | Email_unverified
           | Validation_error
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.Disabled_for_team -> "Disabled for team"
-        | Type.Not_found -> "Not found"
-        | Type.Not_a_folder -> "Not a folder"
-        | Type.App_lacks_access -> "App lacks access"
-        | Type.No_permission -> "No permission"
-        | Type.Email_unverified -> "Email unverified"
-        | Type.Validation_error -> "Validation error"
     end
   end
 

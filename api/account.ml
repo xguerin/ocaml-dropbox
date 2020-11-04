@@ -8,7 +8,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   module Protocol = struct
     module PhotoSourceArg = struct
       module Type = struct
-        type t = Base64_data of string [@@deriving dropbox]
+        type t = Base64_data of string [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -16,7 +16,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module SetProfilePhotoArg = struct
       module Type = struct
-        type t = {photo : PhotoSourceArg.Type.t} [@@deriving yojson]
+        type t = {photo : PhotoSourceArg.Type.t} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -24,7 +24,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
     module SetProfilePhotoResult = struct
       module Type = struct
-        type t = {profile_photo_url : string} [@@deriving yojson]
+        type t = {profile_photo_url : string} [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -38,17 +38,10 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Dimension_error
           | Thumbnail_error
           | Transient_error
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
-
-      let to_string = function
-        | Type.File_type_error -> "File type error"
-        | Type.File_size_error -> "File size error"
-        | Type.Dimension_error -> "Dimension error"
-        | Type.Thumbnail_error -> "Thumbnail error"
-        | Type.Transient_error -> "Transient error"
     end
   end
 

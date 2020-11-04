@@ -15,7 +15,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; familiar_name : string
           ; display_name : string
           ; abbreviated_name : string }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -26,7 +26,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Anyone
           | Team
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -37,7 +37,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | From_anyone
           | From_team_only
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -49,7 +49,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Default_public
           | Default_team_only
           | Team_only
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -61,7 +61,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { shared_folder_member_policy : SharedFolderMemberPolicy.Type.t
           ; shared_folder_join_policy : SharedFolderJoinPolicy.Type.t
           ; shared_link_create_policy : SharedLinkCreatePolicy.Type.t }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -72,7 +72,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Disabled
           | Enabled
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -85,7 +85,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; name : string
           ; sharing_policies : TeamSharingPolicies.Type.t
           ; office_addin_policies : OfficeAddinPolicy.Type.t }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -97,7 +97,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Basic
           | Pro
           | Business
-        [@@deriving dropbox]
+        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -109,7 +109,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           { root_namespace_id : string
           ; home_namespace_id : string
           ; home_path : string }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -120,7 +120,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { root_namespace_id : string
           ; home_namespace_id : string }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -131,7 +131,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           | Team of TeamRootInfo.Type.t
           | User of UserRootInfo.Type.t
-        [@@deriving dropbox {mode = SubType}]
+        [@@deriving dropbox {mode = SubType}, show]
       end
     end
 
@@ -152,7 +152,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; country : string
           ; team : (FullTeam.Type.t option[@default None])
           ; team_member_id : (string option[@default None]) }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -167,7 +167,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; user_within_team_space_limit_type : (Int64.t option[@default None])
           ; user_within_team_space_used_cached : (Int64.t option[@default None])
           }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)
@@ -178,7 +178,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
         type t =
           { used : Int64.t
           ; allocation : SpaceAllocation.Type.t }
-        [@@deriving yojson]
+        [@@deriving yojson, show]
       end
 
       module Json = Json.Make (Type)

@@ -2,7 +2,7 @@ open Common.Protocol
 
 module DownloadArg = struct
   module Type = struct
-    type t = {path : string} [@@deriving yojson]
+    type t = {path : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -13,14 +13,10 @@ module DownloadError = struct
     type t =
       | Path of LookupError.Type.t
       | Unsupported_file
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path path -> LookupError.to_string path
-    | Type.Unsupported_file -> "Unsupported file"
 end
 
 module Dimensions = struct
@@ -28,7 +24,7 @@ module Dimensions = struct
     type t =
       { height : Int64.t
       ; width : Int64.t }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -39,7 +35,7 @@ module GpsCoordinates = struct
     type t =
       { latitude : float
       ; longitude : float }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -51,7 +47,7 @@ module PhotoMetadata = struct
       { dimensions : Dimensions.Type.t option [@default None]
       ; location : Dimensions.Type.t option [@default None]
       ; time_taken : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -64,7 +60,7 @@ module VideoMetadata = struct
       ; location : Dimensions.Type.t option [@default None]
       ; time_taken : string option [@default None]
       ; duration : Int64.t option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -75,7 +71,7 @@ module MediaMetadata = struct
     type t =
       | Photo of PhotoMetadata.Type.t
       | Video of VideoMetadata.Type.t
-    [@@deriving dropbox {mode = SubType}]
+    [@@deriving dropbox {mode = SubType}, show]
   end
 
   module Json = Json.Make (Type)
@@ -86,7 +82,7 @@ module MediaInfo = struct
     type t =
       | Metadata of MediaMetadata.Type.t
       | Pending
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -94,7 +90,7 @@ end
 
 module SymlinkInfo = struct
   module Type = struct
-    type t = {target : string} [@@deriving yojson]
+    type t = {target : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -106,7 +102,7 @@ module FileSharingInfo = struct
       { read_only : bool
       ; parent_shared_folder_id : string
       ; modified_by : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -114,7 +110,8 @@ end
 
 module ExportInfo = struct
   module Type = struct
-    type t = {export_as : string option [@default None]} [@@deriving yojson]
+    type t = {export_as : string option [@default None]}
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -127,7 +124,7 @@ module FileLockMetadata = struct
       ; lockholder_name : string option [@default None]
       ; lockholder_account_id : string option [@default None]
       ; created : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -154,7 +151,7 @@ module FileMetadata = struct
       ; has_explicit_shared_members : bool option [@default None]
       ; content_hash : string option [@default None]
       ; file_lock_info : FileLockMetadata.Type.t option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -168,7 +165,7 @@ module FolderSharingInfo = struct
       ; shared_folder_id : string option [@default None]
       ; traverse_only : bool
       ; no_access : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -185,7 +182,7 @@ module FolderMetadata = struct
       ; shared_folder_id : string option [@default None]
       ; sharing_info : FolderSharingInfo.Type.t option [@default None]
       ; property_groups : PropertyGroup.Type.t list option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -193,7 +190,7 @@ end
 
 module DownloadZipResult = struct
   module Type = struct
-    type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
+    type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -205,15 +202,10 @@ module DownloadZipError = struct
       | Path of LookupError.Type.t
       | Too_large
       | Too_many_files
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path path -> LookupError.to_string path
-    | Type.Too_large -> "Too large"
-    | Type.Too_many_files -> "Too many files"
 end
 
 module SharedLinkFileInfo = struct
@@ -222,7 +214,7 @@ module SharedLinkFileInfo = struct
       { url : string
       ; path : string option [@default None]
       ; password : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -233,7 +225,7 @@ module PathOrLink = struct
     type t =
       | Path of string
       | Link of SharedLinkFileInfo.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -244,7 +236,7 @@ module ThumbnailFormat = struct
     type t =
       | Jpeg
       | Png
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -262,7 +254,7 @@ module ThumbnailSize = struct
       | W960H640
       | W1024H768
       | W2048H1536
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -274,7 +266,7 @@ module ThumbnailMode = struct
       | Strict
       | Bestfit
       | Fitone_bestfit
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -287,7 +279,7 @@ module ThumbnailV2Arg = struct
       ; format : ThumbnailFormat.Type.t
       ; size : ThumbnailSize.Type.t
       ; mode : ThumbnailMode.Type.t }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -300,7 +292,7 @@ module MinimalFileLinkMetadata = struct
       ; rev : string
       ; id : string option [@default None]
       ; path : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -311,7 +303,7 @@ module PreviewResult = struct
     type t =
       { file_metadata : FileMetadata.Type.t option [@default None]
       ; link_metadata : MinimalFileLinkMetadata.Type.t option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -326,18 +318,10 @@ module ThumbnailV2Error = struct
       | Path of LookupError.Type.t
       | Unsupported_extension
       | Unsupported_image
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Access_denied -> "Access denied"
-    | Type.Conversion_error -> "Conversion error"
-    | Type.Not_found -> "Not found"
-    | Type.Path v -> "Path error: " ^ LookupError.to_string v
-    | Type.Unsupported_extension -> "Unsupported extension"
-    | Type.Unsupported_image -> "Unsupported image"
 end
 
 module SharedLink = struct
@@ -345,7 +329,7 @@ module SharedLink = struct
     type t =
       { url : string
       ; password : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -353,7 +337,7 @@ end
 
 module TemplateFilterBase = struct
   module Type = struct
-    type t = Filter_some of string list [@@deriving dropbox]
+    type t = Filter_some of string list [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -373,7 +357,7 @@ module ListFolderArg = struct
       ; include_property_groups : TemplateFilterBase.Type.t option
             [@default None]
       ; include_non_downloadable_files : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -386,7 +370,7 @@ module DeletedMetadata = struct
       ; path_lower : string option [@default None]
       ; path_display : string option [@default None]
       ; parent_shared_folder_id : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -398,7 +382,7 @@ module Metadata = struct
       | Deleted of DeletedMetadata.Type.t
       | File of FileMetadata.Type.t
       | Folder of FolderMetadata.Type.t
-    [@@deriving dropbox {mode = SubType}]
+    [@@deriving dropbox {mode = SubType}, show]
   end
 
   module Json = Json.Make (Type)
@@ -406,7 +390,7 @@ end
 
 module MetadataV2 = struct
   module Type = struct
-    type t = Metadata of Metadata.Type.t [@@deriving dropbox]
+    type t = Metadata of Metadata.Type.t [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -418,7 +402,7 @@ module ListFolderResult = struct
       { entries : Metadata.Type.t list
       ; cursor : string
       ; has_more : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -429,14 +413,10 @@ module TemplateError = struct
     type t =
       | Template_not_found
       | Restricted_content
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Template_not_found -> "Template not found"
-    | Type.Restricted_content -> "Restricted content"
 end
 
 module ListFolderError = struct
@@ -444,19 +424,15 @@ module ListFolderError = struct
     type t =
       | Path of LookupError.Type.t
       | Template_error of TemplateError.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path p -> LookupError.to_string p
-    | Type.Template_error e -> TemplateError.to_string e
 end
 
 module ListFolderContinueArg = struct
   module Type = struct
-    type t = {cursor : string} [@@deriving yojson]
+    type t = {cursor : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -467,14 +443,10 @@ module ListFolderContinueError = struct
     type t =
       | Path of LookupError.Type.t
       | Reset
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path p -> LookupError.to_string p
-    | Type.Reset -> "Reset"
 end
 
 module FileStatus = struct
@@ -482,7 +454,7 @@ module FileStatus = struct
     type t =
       | Active
       | Deleted
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -501,7 +473,7 @@ module FileCategory = struct
       | Folder
       | Paper
       | Other
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -509,7 +481,7 @@ end
 
 module SearchMatchFieldOptions = struct
   module Type = struct
-    type t = {include_highlights : bool} [@@deriving yojson]
+    type t = {include_highlights : bool} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -524,7 +496,7 @@ module SearchOptions = struct
       ; filename_only : bool
       ; file_extensions : string list option
       ; file_categories : FileCategory.Type.t list option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -536,7 +508,7 @@ module SearchV2Arg = struct
       { query : string
       ; options : SearchOptions.Type.t option
       ; match_field_options : SearchMatchFieldOptions.Type.t option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -547,7 +519,7 @@ module HighlightSpan = struct
     type t =
       { highlight_str : string
       ; is_highlighted : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -558,7 +530,7 @@ module SearchMatchV2 = struct
     type t =
       { metadata : MetadataV2.Type.t
       ; highlight_spans : HighlightSpan.Type.t list option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -570,7 +542,7 @@ module SearchV2Result = struct
       { matches : SearchMatchV2.Type.t list
       ; has_more : bool
       ; cursor : string option [@default None] }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -582,21 +554,15 @@ module SearchError = struct
       | Path of LookupError.Type.t
       | Invalid_argument of string option
       | Internal_error
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path p -> LookupError.to_string p
-    | Type.Invalid_argument None -> "Invalid argument"
-    | Type.Invalid_argument (Some e) -> "Invalid argument: " ^ e
-    | Type.Internal_error -> "Internal error"
 end
 
 module SearchV2ContinueArg = struct
   module Type = struct
-    type t = {cursor : string} [@@deriving yojson]
+    type t = {cursor : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -607,7 +573,7 @@ module CreateFolderArg = struct
     type t =
       { path : string
       ; autorename : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -615,7 +581,7 @@ end
 
 module CreateFolderResult = struct
   module Type = struct
-    type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
+    type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -627,15 +593,10 @@ module WriteConflictError = struct
       | File
       | Folder
       | File_ancestor
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.File -> "File"
-    | Type.Folder -> "Folder"
-    | Type.File_ancestor -> "File ancestor"
 end
 
 module WriteError = struct
@@ -648,30 +609,18 @@ module WriteError = struct
       | Disallowed_name
       | Team_folder
       | Too_many_write_operations
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Malformed_path (Some p) -> "Malformed path: " ^ p
-    | Type.Malformed_path None -> "Malformed path"
-    | Type.Conflict c -> WriteConflictError.to_string c ^ " already exists"
-    | Type.No_write_permission -> "No write permission"
-    | Type.Insufficient_space -> "Insufficient space"
-    | Type.Disallowed_name -> "Disallowed name"
-    | Type.Team_folder -> "Team folder"
-    | Type.Too_many_write_operations -> "Too many write operations"
 end
 
 module CreateFolderError = struct
   module Type = struct
-    type t = Path of WriteError.Type.t [@@deriving dropbox]
+    type t = Path of WriteError.Type.t [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function Type.Path p -> WriteError.to_string p
 end
 
 module RelocationArg = struct
@@ -682,7 +631,7 @@ module RelocationArg = struct
       ; allow_shared_folder : bool
       ; autorename : bool
       ; allow_ownership_transfer : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -690,7 +639,7 @@ end
 
 module RelocationResult = struct
   module Type = struct
-    type t = {metadata : Metadata.Type.t} [@@deriving yojson]
+    type t = {metadata : Metadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -712,25 +661,10 @@ module RelocationError = struct
       | Internal_error
       | Cant_move_shared_folder
       | Cant_move_into_vault
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.From_lookup p -> LookupError.to_string p
-    | Type.From_write p -> WriteError.to_string p
-    | Type.To p -> WriteError.to_string p
-    | Type.Cant_copy_shared_folder -> "Can't copy shared folder"
-    | Type.Cant_nest_shared_folder -> "Can't nest shared folder"
-    | Type.Cant_move_folder_into_itself -> "Can't move folder into itself"
-    | Type.Too_many_files -> "Too many files"
-    | Type.Insufficient_quota -> "Insufficient quota"
-    | Type.Duplicated_or_nested_paths -> "Duplicated or nested paths"
-    | Type.Cant_transfer_ownership -> "Can't transfer ownership"
-    | Type.Internal_error -> "Internal error"
-    | Type.Cant_move_shared_folder -> "Can't move shared folder"
-    | Type.Cant_move_into_vault -> "Can't move into vault"
 end
 
 module GetMetadataArg = struct
@@ -741,7 +675,7 @@ module GetMetadataArg = struct
       ; include_deleted : bool
       ; include_has_explicit_shared_members : bool
       ; include_property_groups : TemplateFilterBase.Type.t option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -749,12 +683,10 @@ end
 
 module GetMetadataError = struct
   module Type = struct
-    type t = Path of LookupError.Type.t [@@deriving dropbox]
+    type t = Path of LookupError.Type.t [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function Type.Path p -> LookupError.to_string p
 end
 
 module RelocationPath = struct
@@ -762,7 +694,7 @@ module RelocationPath = struct
     type t =
       { from_path : string
       ; to_path : string }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -773,7 +705,7 @@ module RelocationBatchArgBase = struct
     type t =
       { entries : RelocationPath.Type.t list
       ; autorename : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -785,7 +717,7 @@ module RelocationBatchErrorEntry = struct
       | Relocation_error of RelocationError.Type.t
       | Internal_error
       | Too_many_write_operations
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -796,7 +728,7 @@ module RelocationBatchResultEntry = struct
     type t =
       | Success of Metadata.Type.t
       | Failure of RelocationBatchErrorEntry.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -805,7 +737,7 @@ end
 module RelocationBatchV2Result = struct
   module Type = struct
     type t = {entries : RelocationBatchResultEntry.Type.t list}
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -816,7 +748,7 @@ module RelocationBatchV2Launch = struct
     type t =
       | Async_job_id of string
       | Complete of RelocationBatchV2Result.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -824,7 +756,7 @@ end
 
 module PollArg = struct
   module Type = struct
-    type t = {async_job_id : string} [@@deriving yojson]
+    type t = {async_job_id : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -835,7 +767,7 @@ module RelocationBatchV2JobStatus = struct
     type t =
       | In_progress
       | Complete of RelocationBatchV2Result.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -846,19 +778,15 @@ module PollError = struct
     type t =
       | Invalid_async_job_id
       | Internal_error
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Invalid_async_job_id -> "Invalid async job ID"
-    | Type.Internal_error -> "Internal error"
 end
 
 module GetCopyReferenceArg = struct
   module Type = struct
-    type t = {path : string} [@@deriving yojson]
+    type t = {path : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -870,7 +798,7 @@ module GetCopyReferenceResult = struct
       { metadata : Metadata.Type.t
       ; copy_reference : string
       ; expires : string }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -878,12 +806,10 @@ end
 
 module GetCopyReferenceError = struct
   module Type = struct
-    type t = Path of LookupError.Type.t [@@deriving dropbox]
+    type t = Path of LookupError.Type.t [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function Type.Path e -> "Path: " ^ LookupError.to_string e
 end
 
 module SaveCopyReferenceArg = struct
@@ -891,7 +817,7 @@ module SaveCopyReferenceArg = struct
     type t =
       { copy_reference : string
       ; path : string }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -899,7 +825,7 @@ end
 
 module SaveCopyReferenceResult = struct
   module Type = struct
-    type t = {metadata : Metadata.Type.t} [@@deriving yojson]
+    type t = {metadata : Metadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -913,17 +839,10 @@ module SaveCopyReferenceError = struct
       | No_permission
       | Not_found
       | Too_many_files
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path e -> "Path: " ^ WriteError.to_string e
-    | Type.Invalid_copy_reference -> "Invalid copy reference"
-    | Type.No_permission -> "No permission"
-    | Type.Not_found -> "Not found"
-    | Type.Too_many_files -> "Too many files"
 end
 
 module CreateFolderBatchArg = struct
@@ -932,7 +851,7 @@ module CreateFolderBatchArg = struct
       { paths : string list
       ; autorename : bool
       ; force_async : bool }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -940,7 +859,7 @@ end
 
 module CreateFolderEntryResult = struct
   module Type = struct
-    type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson]
+    type t = {metadata : FolderMetadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -948,7 +867,7 @@ end
 
 module CreateFolderEntryError = struct
   module Type = struct
-    type t = Path of WriteError.Type.t [@@deriving dropbox]
+    type t = Path of WriteError.Type.t [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -959,7 +878,7 @@ module CreateFolderBatchResultEntry = struct
     type t =
       | Success of CreateFolderEntryResult.Type.t
       | Failure of CreateFolderEntryError.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -968,7 +887,7 @@ end
 module CreateFolderBatchResult = struct
   module Type = struct
     type t = {entries : CreateFolderBatchResultEntry.Type.t list}
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -979,7 +898,7 @@ module CreateFolderBatchLaunch = struct
     type t =
       | Async_job_id of string
       | Complete of CreateFolderBatchResult.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -991,7 +910,7 @@ module CreateFolderBatchJobStatus = struct
       | In_progress
       | Complete of CreateFolderBatchResult.Type.t
       | Failed of CreateFolderEntryError.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -1002,7 +921,7 @@ module DeleteArg = struct
     type t =
       { path : string
       ; parent_rev : string option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1010,7 +929,7 @@ end
 
 module DeleteResult = struct
   module Type = struct
-    type t = {metadata : Metadata.Type.t} [@@deriving yojson]
+    type t = {metadata : Metadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1023,21 +942,15 @@ module DeleteError = struct
       | Path_write of WriteError.Type.t
       | Too_many_write_operations
       | Too_many_files
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path_lookup p -> LookupError.to_string p
-    | Type.Path_write p -> WriteError.to_string p
-    | Type.Too_many_write_operations -> "Too many write operations"
-    | Type.Too_many_files -> "Too many files"
 end
 
 module DeleteBatchArg = struct
   module Type = struct
-    type t = {entries : DeleteArg.Type.t list} [@@deriving yojson]
+    type t = {entries : DeleteArg.Type.t list} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1045,7 +958,7 @@ end
 
 module DeleteBatchResultData = struct
   module Type = struct
-    type t = {metadata : Metadata.Type.t} [@@deriving yojson]
+    type t = {metadata : Metadata.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1056,7 +969,7 @@ module DeleteBatchResultEntry = struct
     type t =
       | Success of DeleteBatchResultData.Type.t
       | Failure of DeleteError.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -1064,7 +977,8 @@ end
 
 module DeleteBatchResult = struct
   module Type = struct
-    type t = {entries : DeleteBatchResultEntry.Type.t list} [@@deriving yojson]
+    type t = {entries : DeleteBatchResultEntry.Type.t list}
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1075,7 +989,7 @@ module DeleteBatchLaunch = struct
     type t =
       | Async_job_id of string
       | Complete of DeleteBatchResult.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -1087,7 +1001,7 @@ module DeleteBatchJobStatus = struct
       | In_progress
       | Complete of DeleteBatchResult.Type.t
       | Failed of DeleteError.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -1095,7 +1009,7 @@ end
 
 module ExportArg = struct
   module Type = struct
-    type t = {path : string} [@@deriving yojson]
+    type t = {path : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1107,7 +1021,7 @@ module ExportMetadata = struct
       { name : string
       ; size : Int64.t
       ; export_hash : string option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1118,7 +1032,7 @@ module ExportResult = struct
     type t =
       { export_metadata : ExportMetadata.Type.t
       ; file_metadata : FileMetadata.Type.t }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1130,20 +1044,15 @@ module ExportError = struct
       | Path of LookupError.Type.t
       | Non_exportable
       | Retry_error
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path e -> "Path: " ^ LookupError.to_string e
-    | Type.Non_exportable -> "Non exportable"
-    | Type.Retry_error -> "Retry error"
 end
 
 module LockFileArg = struct
   module Type = struct
-    type t = {path : string} [@@deriving yojson]
+    type t = {path : string} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1151,7 +1060,7 @@ end
 
 module LockFileBatchArg = struct
   module Type = struct
-    type t = {entries : LockFileArg.Type.t} [@@deriving yojson]
+    type t = {entries : LockFileArg.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1163,7 +1072,7 @@ module SingleUserLock = struct
       { created : string
       ; lock_holder_account_id : string
       ; lock_holder_team_id : string option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1174,7 +1083,7 @@ module FileLockContent = struct
     type t =
       | Unlocked
       | Single_user of SingleUserLock.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -1182,7 +1091,7 @@ end
 
 module FileLock = struct
   module Type = struct
-    type t = {content : FileLockContent.Type.t} [@@deriving yojson]
+    type t = {content : FileLockContent.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1193,7 +1102,7 @@ module LockFileResult = struct
     type t =
       { metadata : Metadata.Type.t
       ; lock : FileLock.Type.t }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1201,7 +1110,7 @@ end
 
 module LockConflictError = struct
   module Type = struct
-    type t = {lock : FileLock.Type.t} [@@deriving yojson]
+    type t = {lock : FileLock.Type.t} [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1218,20 +1127,10 @@ module LockFileError = struct
       | File_not_shared
       | Lock_conflict of LockConflictError.Type.t
       | Internal_error
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path_lookup e -> "Path lookup: " ^ LookupError.to_string e
-    | Type.Too_many_write_operations -> "Too many write operations"
-    | Type.Too_many_files -> "Too many files"
-    | Type.No_write_permission -> "No write permission"
-    | Type.Cannot_be_locked -> "Cannot be locked"
-    | Type.File_not_shared -> "File not shared"
-    | Type.Lock_conflict _ -> "Lock conflict"
-    | Type.Internal_error -> "Internal error"
 end
 
 module LockFileResultEntry = struct
@@ -1239,7 +1138,7 @@ module LockFileResultEntry = struct
     type t =
       | Success of LockFileResult.Type.t
       | Failure of LockFileError.Type.t
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
@@ -1247,7 +1146,8 @@ end
 
 module LockFileBatchResult = struct
   module Type = struct
-    type t = {entries : LockFileResultEntry.Type.t list} [@@deriving yojson]
+    type t = {entries : LockFileResultEntry.Type.t list}
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1258,7 +1158,7 @@ module PreviewArg = struct
     type t =
       { path : string
       ; rev : string option }
-    [@@deriving yojson]
+    [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
@@ -1271,14 +1171,8 @@ module PreviewError = struct
       | In_progress
       | Unsupported_extension
       | Unsupported_content
-    [@@deriving dropbox]
+    [@@deriving dropbox, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string = function
-    | Type.Path e -> "Path: " ^ LookupError.to_string e
-    | Type.In_progress -> "In progress"
-    | Type.Unsupported_extension -> "Unsupported extension"
-    | Type.Unsupported_content -> "Unsupported content"
 end

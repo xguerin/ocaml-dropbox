@@ -1,10 +1,14 @@
 open Cohttp
 
 module type Endpoint = sig
-  module Type : Json.Deriving
-  module Json : Json.S with type t = Type.t
+  module Type : sig
+    include Json.Deriving
 
-  val to_string : Type.t -> string
+    val pp : Format.formatter -> t -> unit
+    val show : t -> string
+  end
+
+  module Json : Json.S with type t = Type.t
 end
 
 module type T = sig
@@ -27,29 +31,27 @@ module type T = sig
        Response.t * Cohttp_lwt.Body.t
     -> (Response.t * Cohttp_lwt.Body.t, t) result Lwt.t
 
-  val to_string : t -> string
+  val show : t -> string
   val pp : Format.formatter -> t -> unit
   val unpack : endpoint -> error
 end
 
 module Void = struct
   module Type = struct
-    type t = unit [@@deriving yojson]
+    type t = unit [@@deriving yojson, show]
   end
 
   module Json = Json.Make (Type)
-
-  let to_string _ = ""
 end
 
 module Make (E : Endpoint) : T with type error = E.Type.t = struct
-  type error = E.Type.t [@@deriving of_yojson]
+  type error = E.Type.t [@@deriving of_yojson, show]
 
   type endpoint =
     { error : error
     ; error_summary : string
     ; user_message : (string option[@default None]) }
-  [@@deriving of_yojson]
+  [@@deriving of_yojson, show]
 
   type t =
     | Access_denied
@@ -62,6 +64,7 @@ module Make (E : Endpoint) : T with type error = E.Type.t = struct
     | Server
     | Too_many_requests of int
     | Unknown
+  [@@deriving show]
 
   let handle (resp, body) =
     match resp with
@@ -90,18 +93,5 @@ module Make (E : Endpoint) : T with type error = E.Type.t = struct
       Lwt.return_error Server
     | _ -> Lwt.return_ok (resp, body)
 
-  let to_string = function
-    | Access_denied -> "Access denied"
-    | Bad_input_parameter v -> "Bad input: " ^ v
-    | Bad_or_expired_token -> "Bad or expired token"
-    | Endpoint {error; _} -> E.to_string error
-    | Missing_header -> "Missing header"
-    | Not_implemented -> "Not implemented"
-    | Serdes c -> "Serialization error: " ^ c
-    | Server -> "Server-side error"
-    | Too_many_requests _ -> "Too many requests"
-    | Unknown -> "Unknown error"
-
-  let pp ppf v = Format.pp_print_string ppf (to_string v)
   let unpack {error; _} = error
 end
