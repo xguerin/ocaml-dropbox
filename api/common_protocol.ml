@@ -349,6 +349,17 @@ module CommitInfo = struct
   end
 
   module Json = Json.Make (Type)
+
+  let make ?(mode = WriteMode.Type.Add) ?(autorename = false) ?client_modified
+      ?(mute = false) ?property_groups ?(strict_conflict = false) path =
+    Type.
+      { path
+      ; mode
+      ; autorename
+      ; client_modified
+      ; mute
+      ; property_groups
+      ; strict_conflict }
 end
 
 module ListRevisionsMode = struct

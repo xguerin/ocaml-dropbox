@@ -1019,7 +1019,7 @@ module UploadError = struct
     type t =
       | Path of UploadWriteFailed.Type.t
       | Properties_error of InvalidPropertyGroupError.Type.t
-    [@@deriving dropbox, show]
+    [@@deriving dropbox {mode = SubType}, show]
   end
 
   module Json = Json.Make (Type)

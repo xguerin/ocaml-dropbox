@@ -131,6 +131,19 @@ let search ~session ~path = function
     | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e))
   | None -> failwith "The --query option must be set"
 
+let upload ~session path = function
+  | Some target -> (
+    let module Error = Files.Upload.Error in
+    let%lwt result =
+      Lwt_io.open_file ~mode:Input path
+      >>= fun channel ->
+      let ci = Files.Protocol.CommitInfo.make target in
+      Files.upload ~session ci (`Stream (Lwt_io.read_lines channel)) in
+    match result with
+    | Ok _ -> Lwt.return ()
+    | Error e -> Logs_lwt.err (fun m -> m "%a" Error.pp e))
+  | None -> failwith "The --target option must be set"
+
 let () =
   (*
    * Declare log reporter and level.
@@ -184,5 +197,6 @@ let () =
     | "create_folder" -> create_folder ~session path
     | "list_folder" -> list_folder ~session path
     | "search" -> search ~session ~path !qry_opt
+    | "upload" -> upload ~session path !tgt_opt
     | _ -> failwith "Invalid command" in
   Lwt_main.run op
