@@ -760,3 +760,402 @@ module GetTemporaryUpoadLinkResult = struct
 
   module Json = Json.Make (Type)
 end
+
+module ThumbnailArg = struct
+  module Type = struct
+    type t =
+      { path : string
+      ; format : ThumbnailFormat.Type.t
+      ; size : ThumbnailSize.Type.t
+      ; mode : ThumbnailMode.Type.t }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetThumbnailBatchArg = struct
+  module Type = struct
+    type t = {entries : ThumbnailArg.Type.t list} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ThumbnailError = struct
+  module Type = struct
+    type t =
+      | Path of LookupError.Type.t
+      | Unsupported_extension
+      | Unsupported_image
+      | Conversion_error
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetThumbnailBatchResultData = struct
+  module Type = struct
+    type t =
+      { metadata : FileMetadata.Type.t
+      ; thumbnail : string }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetThumbnailBatchResultEntry = struct
+  module Type = struct
+    type t =
+      | Success of GetThumbnailBatchResultData.Type.t
+      | Failure of ThumbnailError.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetThumbnailBatchResult = struct
+  module Type = struct
+    type t = {entries : GetThumbnailBatchResultEntry.Type.t list}
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module GetThumbnailBatchError = struct
+  module Type = struct
+    type t = Too_many_files [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListFolderGetLastCursorResult = struct
+  module Type = struct
+    type t = {cursor : string} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListFolderLongPollArg = struct
+  module Type = struct
+    type t =
+      { cursor : string
+      ; timeout : Int64.t }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListFolderLongPollResult = struct
+  module Type = struct
+    type t =
+      { changes : bool
+      ; backoff : Int64.t option }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListFolderLongPollError = struct
+  module Type = struct
+    type t = Reset [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListRevisionsArg = struct
+  module Type = struct
+    type t =
+      { path : string
+      ; mode : ListRevisionsMode.Type.t
+      ; limit : Int64.t }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListRevisionsResult = struct
+  module Type = struct
+    type t =
+      { is_deleted : bool
+      ; entries : FileMetadata.Type.t list
+      ; server_deleted : string option [@default None] }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module ListRevisionsError = struct
+  module Type = struct
+    type t = Path of LookupError.Type.t [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module MoveBatchArg = struct
+  module Type = struct
+    type t =
+      { entries : RelocationArg.Type.t list
+      ; autorename : bool
+      ; allow_ownership_transfer : bool }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module RestoreArg = struct
+  module Type = struct
+    type t =
+      { path : string
+      ; rev : string }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module RestoreError = struct
+  module Type = struct
+    type t =
+      | Path_lookup of LookupError.Type.t
+      | Path_write of WriteError.Type.t
+      | Invalid_revision
+      | In_progress
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module SaveUrlArg = struct
+  module Type = struct
+    type t =
+      { path : string
+      ; url : string }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module SaveUrlResult = struct
+  module Type = struct
+    type t =
+      | Async_job_id of string
+      | Complete of FileMetadata.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module SaveUrlError = struct
+  module Type = struct
+    type t =
+      | Path of WriteError.Type.t
+      | Download_failed
+      | Invalid_revision
+      | Not_found
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module SaveUrlJobStatus = struct
+  module Type = struct
+    type t =
+      | In_progress
+      | Complete of FileMetadata.Type.t
+      | Failed of SaveUrlError.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UnlockFileArg = struct
+  module Type = struct
+    type t = {path : string} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UnlockFileBatchArg = struct
+  module Type = struct
+    type t = {entries : UnlockFileArg.Type.t list} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadWriteFailed = struct
+  module Type = struct
+    type t =
+      { reason : WriteError.Type.t
+      ; upload_session_id : string }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadError = struct
+  module Type = struct
+    type t =
+      | Path of UploadWriteFailed.Type.t
+      | Properties_error of InvalidPropertyGroupError.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionStartArg = struct
+  module Type = struct
+    type t = {close : bool} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionStartResult = struct
+  module Type = struct
+    type t = {session_id : string} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionCursor = struct
+  module Type = struct
+    type t =
+      { session_id : string
+      ; offset : Int64.t }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionAppendArg = struct
+  module Type = struct
+    type t =
+      { cursor : UploadSessionCursor.Type.t
+      ; close : bool }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionOffsetError = struct
+  module Type = struct
+    type t = {correct_offset : Int64.t} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionLookupError = struct
+  module Type = struct
+    type t =
+      | Not_found
+      | Incorrect_offset of UploadSessionOffsetError.Type.t
+      | Closed
+      | Not_closed
+      | Too_large
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishArg = struct
+  module Type = struct
+    type t =
+      { cursor : UploadSessionCursor.Type.t
+      ; commit : CommitInfo.Type.t }
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishError = struct
+  module Type = struct
+    type t =
+      | Lookup_failed of UploadSessionLookupError.Type.t
+      | Path of WriteError.Type.t
+      | Properties_error of InvalidPropertyGroupError.Type.t
+      | Too_many_shared_folder_targets
+      | Too_many_write_operations
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishBatchArg = struct
+  module Type = struct
+    type t = {entries : UploadSessionFinishArg.Type.t} [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishBatchResultEntry = struct
+  module Type = struct
+    type t =
+      | Success of FileMetadata.Type.t
+      | Failure of UploadSessionFinishError.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishBatchResult = struct
+  module Type = struct
+    type t = {entries : UploadSessionFinishBatchResultEntry.Type.t list}
+    [@@deriving yojson, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishBatchLaunch = struct
+  module Type = struct
+    type t =
+      | Async_job_id of string
+      | Complete of UploadSessionFinishBatchResult.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
+module UploadSessionFinishBatchJobStatus = struct
+  module Type = struct
+    type t =
+      | In_progress
+      | Complete of UploadSessionFinishBatchResult.Type.t
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end

@@ -41,6 +41,38 @@ module ContentDownload = struct
   end
 end
 
+module ContentUpload = struct
+  module Function (C : S.Client) (I : Data) (O : Data) (R : Error.T) (E : Info) =
+  struct
+    let deserialize v =
+      match O.Json.of_string v with
+      | Ok o -> Lwt.return_ok o
+      | Error e ->
+        let%lwt () = Logs_lwt.err (fun m -> m "%s" v) in
+        Lwt.return_error (R.Serdes e)
+
+    let call ?(headers = Header.init ()) ?q v payload =
+      let content = I.Json.to_string v in
+      let h = Header.add headers "Dropbox-API-Arg" content in
+      let h = Header.add h "Content-Type" "application/octet-stream" in
+      let uri =
+        match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
+      C.post ~body:payload ~headers:h uri
+      >>= R.handle
+      >>=? fun (_, body) -> Body.to_string body >>= deserialize
+  end
+
+  module Provider (C : S.Client) (I : Data) (R : Error.T) (E : Info) = struct
+    let call ?(headers = Header.init ()) ?q v payload =
+      let content = I.Json.to_string v in
+      let h = Header.add headers "Dropbox-API-Arg" content in
+      let h = Header.add h "Content-Type" "application/octet-stream" in
+      let uri =
+        match q with Some q -> Uri.with_query E.uri q | None -> E.uri in
+      C.post ~body:payload ~headers:h uri >>= R.handle
+  end
+end
+
 module RemoteProcedureCall = struct
   module Function (C : S.Client) (I : Data) (O : Data) (R : Error.T) (E : Info) =
   struct

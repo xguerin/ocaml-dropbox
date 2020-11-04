@@ -201,8 +201,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
   end
 
-  let delete ~session path =
-    let request = Delete.Arg.Type.{path; parent_rev = None}
+  let delete ~session ?parent_rev path =
+    let request = Delete.Arg.Type.{path; parent_rev}
     and headers = Session.headers session in
     Delete.Fn.call ~headers request
 
@@ -442,11 +442,21 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Get thumbnail batch.
    *)
 
-  let get_thumbnail_batch_uri = Root.content "/files/get_thumbnail_batch"
+  module GetThumbnailBatch = struct
+    module Arg = Protocol.GetThumbnailBatchArg
+    module Result = Protocol.GetThumbnailBatchResult
+    module Error = Error.Make (Protocol.GetThumbnailBatchError)
 
-  let get_thumbnail_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/get_thumbnail_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_thumbnail_batch ~session entries =
+    let headers = Session.headers session in
+    GetThumbnailBatch.Fn.call ~headers {entries}
 
   (*
    * List folder.
@@ -505,113 +515,239 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * List folder get latest cursor.
    *)
 
-  let list_folder_get_latest_cursor_uri =
-    Root.api "/files/list_folder/get_latest_cursor"
+  module ListFolderGetLastCursor = struct
+    module Arg = Protocol.ListFolderArg
+    module Result = Protocol.ListFolderGetLastCursorResult
+    module Error = Error.Make (Protocol.ListFolderError)
 
-  let list_folder_get_latest_cursor (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/list_folder/get_latest_cursor"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let list_folder_get_latest_cursor ~session path =
+    let arg =
+      ListFolder.Arg.Type.
+        { path = (if path = "/" then "" else path)
+        ; recursive = false
+        ; include_media_info = false
+        ; include_deleted = false
+        ; include_has_explicit_shared_members = false
+        ; include_mounted_folders = false
+        ; limit = None
+        ; shared_link = None
+        ; include_property_groups = None
+        ; include_non_downloadable_files = false } in
+    let headers = Session.headers session in
+    ListFolderGetLastCursor.Fn.call ~headers arg
 
   (*
    * List folder long poll.
    *)
 
-  let list_folder_longpoll_uri = Root.api "/files/list_folder/longpoll"
+  module ListFolderLongPoll = struct
+    module Arg = Protocol.ListFolderLongPollArg
+    module Result = Protocol.ListFolderLongPollResult
+    module Error = Error.Make (Protocol.ListFolderLongPollError)
 
-  let list_folder_longpoll (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/list_folder/longpoll"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let list_folder_longpoll ~session cursor timeout =
+    let headers = Session.headers session in
+    ListFolderLongPoll.Fn.call ~headers {cursor; timeout}
 
   (*
    * List revisions.
    *)
 
-  let list_revisions_uri = Root.api "/files/list_revisions"
+  module ListRevisions = struct
+    module Arg = Protocol.ListRevisionsArg
+    module Result = Protocol.ListRevisionsResult
+    module Error = Error.Make (Protocol.ListRevisionsError)
 
-  let list_revisions (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/list_revisions"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let list_revisions ~session path mode limit =
+    let headers = Session.headers session in
+    ListRevisions.Fn.call ~headers {path; mode; limit}
 
   (*
    * Lock file batch.
    *)
 
-  let lock_file_batch_uri = Root.api "/files/lock_file_batch"
+  module LockFileBatch = struct
+    module Arg = Protocol.LockFileBatchArg
+    module Result = Protocol.LockFileBatchResult
+    module Error = Error.Make (Protocol.LockFileError)
 
-  let lock_file_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/lock_file_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let lock_file_batch ~session entries =
+    let headers = Session.headers session in
+    LockFileBatch.Fn.call ~headers {entries}
 
   (*
    * Move.
    *)
 
-  let move_uri = Root.api "/files/move_v2"
+  module Move = struct
+    module Arg = Protocol.RelocationArg
+    module Result = Protocol.RelocationResult
+    module Error = Error.Make (Protocol.RelocationError)
 
-  let move (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/move_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let move ~session ?(autorename = false) ?(allow_ownership_transfer = false)
+      from_path to_path =
+    let headers = Session.headers session in
+    Move.Fn.call ~headers
+      { from_path
+      ; to_path
+      ; allow_shared_folder = false
+      ; autorename
+      ; allow_ownership_transfer }
 
   (*
    * Move batch.
    *)
 
-  let move_batch_uri = Root.api "/files/move_batch_v2"
+  module MoveBatch = struct
+    module Arg = Protocol.MoveBatchArg
+    module Result = Protocol.RelocationBatchV2Launch
+    module Error = Error.Make (Error.Void)
 
-  let move_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/move_batch_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let move_batch ~session ?(autorename = false)
+      ?(allow_ownership_transfer = false) entries =
+    let headers = Session.headers session in
+    MoveBatch.Fn.call ~headers {entries; autorename; allow_ownership_transfer}
 
   (*
    * Move batch check.
    *)
 
-  let move_batch_check_uri = Root.api "/files/move_batch/check_v2"
+  module MoveBatchCheck = struct
+    module Arg = Protocol.PollArg
+    module Result = Protocol.RelocationBatchV2JobStatus
+    module Error = Error.Make (Protocol.PollError)
 
-  let move_batch_check (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/move_batch/check_v2"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let move_batch_check ~session async_job_id =
+    let headers = Session.headers session in
+    MoveBatchCheck.Fn.call ~headers {async_job_id}
 
   (*
    * Permanently delete.
    *)
 
-  let permanently_delete_uri = Root.api "/files/permanently_delete"
+  module PermanentlyDelete = struct
+    module Arg = Protocol.DeleteArg
+    module Error = Error.Make (Protocol.DeleteError)
 
-  let permanently_delete (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/permanently_delete"
+    end
+
+    module Fn = RemoteProcedureCall.Provider (C) (Arg) (Error) (Info)
+  end
+
+  let permanently_delete ~session ?parent_rev path =
+    let headers = Session.headers session in
+    PermanentlyDelete.Fn.call ~headers {path; parent_rev}
 
   (*
    * Restore.
    *)
 
-  let restore_uri = Root.api "/files/restore"
+  module Restore = struct
+    module Arg = Protocol.RestoreArg
+    module Result = Protocol.FileMetadata
+    module Error = Error.Make (Protocol.RestoreError)
 
-  let restore (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/restore"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let restore ~session path rev =
+    let headers = Session.headers session in
+    Restore.Fn.call ~headers {path; rev}
 
   (*
    * Save URL.
    *)
 
-  let save_url_uri = Root.api "/files/save_url"
+  module SaveUrl = struct
+    module Arg = Protocol.SaveUrlArg
+    module Result = Protocol.SaveUrlResult
+    module Error = Error.Make (Protocol.SaveUrlError)
 
-  let save_url (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/save_url"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let save_url ~session path url =
+    let headers = Session.headers session in
+    SaveUrl.Fn.call ~headers {path; url}
 
   (*
    * Save URL check job status.
    *)
 
-  let save_url_check_job_status_uri =
-    Root.api "/files/save_url/check_job_status"
+  module SaveUrlCheckJobStatus = struct
+    module Arg = Protocol.PollArg
+    module Result = Protocol.SaveUrlJobStatus
+    module Error = Error.Make (Protocol.PollError)
 
-  let save_url_check_job_status (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/save_url/check_job_status"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let save_url_check_job_status ~session async_job_id =
+    let headers = Session.headers session in
+    SaveUrlCheckJobStatus.Fn.call ~headers {async_job_id}
 
   (*
    * Search.
@@ -671,71 +807,138 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    * Unlock file batch.
    *)
 
-  let unlock_file_batch_uri = Root.api "/files/unlock_file_batch"
+  module UnlockFileBatch = struct
+    module Arg = Protocol.UnlockFileBatchArg
+    module Result = Protocol.LockFileBatchResult
+    module Error = Error.Make (Protocol.LockFileError)
 
-  let unlock_file_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/unlock_file_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let unlock_file_batch ~session entries =
+    let headers = Session.headers session in
+    UnlockFileBatch.Fn.call ~headers {entries}
 
   (*
    * Upload.
    *)
 
-  let upload_uri = Root.content "/files/upload"
+  module Upload = struct
+    module Arg = Protocol.CommitInfo
+    module Result = Protocol.FileMetadata
+    module Error = Error.Make (Protocol.UploadError)
 
-  let upload (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.content "/files/upload"
+    end
+
+    module Fn = ContentUpload.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let upload ~session commit_info payload =
+    let headers = Session.headers session in
+    Upload.Fn.call ~headers commit_info payload
 
   (*
    * Upload session start.
    *)
 
-  let upload_session_start_uri = Root.content "/files/upload_session/start"
+  module UploadSessionStart = struct
+    module Arg = Protocol.UploadSessionStartArg
+    module Result = Protocol.UploadSessionStartResult
+    module Error = Error.Make (Error.Void)
 
-  let upload_session_start (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.content "/files/upload_session/start"
+    end
+
+    module Fn = ContentUpload.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let upload_session_start ~session ?(close = false) payload =
+    let headers = Session.headers session in
+    UploadSessionStart.Fn.call ~headers {close} payload
 
   (*
    * Upload session append.
    *)
 
-  let upload_session_append_uri = Root.content "/files/upload_session/append_v2"
+  module UploadSessionAppend = struct
+    module Arg = Protocol.UploadSessionAppendArg
+    module Error = Error.Make (Protocol.UploadSessionLookupError)
 
-  let upload_session_append (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.content "/files/upload_session/append_v2"
+    end
+
+    module Fn = ContentUpload.Provider (C) (Arg) (Error) (Info)
+  end
+
+  let upload_session_append ~session ?(close = false) cursor payload =
+    let headers = Session.headers session in
+    UploadSessionAppend.Fn.call ~headers {cursor; close} payload
 
   (*
    * Upload session finish.
    *)
 
-  let upload_session_finish_uri = Root.content "/files/upload_session/finish"
+  module UploadSessionFinish = struct
+    module Arg = Protocol.UploadSessionFinishArg
+    module Result = Protocol.FileMetadata
+    module Error = Error.Make (Protocol.UploadSessionFinishError)
 
-  let upload_session_finish (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.content "/files/upload_session/finish"
+    end
+
+    module Fn = ContentUpload.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let upload_session_finish ~session cursor commit payload =
+    let headers = Session.headers session in
+    UploadSessionFinish.Fn.call ~headers {cursor; commit} payload
 
   (*
    * Upload session finish batch.
    *)
 
-  let upload_session_finish_batch_uri =
-    Root.api "/files/upload_session/finish_batch"
+  module UploadSessionFinishBatch = struct
+    module Arg = Protocol.UploadSessionFinishBatchArg
+    module Result = Protocol.UploadSessionFinishBatchLaunch
+    module Error = Error.Make (Error.Void)
 
-  let upload_session_finish_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/upload_session/finish_batch"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let upload_session_finish_batch ~session entries =
+    let headers = Session.headers session in
+    UploadSessionFinishBatch.Fn.call ~headers {entries}
 
   (*
    * Upload session finish batch check.
    *)
 
-  let upload_session_finish_batch_check_uri =
-    Root.api "/files/upload_session/finish_batch/check"
+  module UploadSessionFinishBatchCheck = struct
+    module Arg = Protocol.PollArg
+    module Result = Protocol.UploadSessionFinishBatchJobStatus
+    module Error = Error.Make (Protocol.PollError)
 
-  let upload_session_finish_batch_check (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/files/upload_session/finish_batch/check"
+    end
+
+    module Fn = RemoteProcedureCall.Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let upload_session_finish_batch_check ~session async_job_id =
+    let headers = Session.headers session in
+    UploadSessionFinishBatchCheck.Fn.call ~headers {async_job_id}
 end

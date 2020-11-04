@@ -6,7 +6,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Protocol = struct
-    open Common_protocol
+    include Common_protocol
 
     module AddPropertiesArg = struct
       module Type = struct
@@ -47,22 +47,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.Make (Type)
     end
 
-    module InvalidPropertyGroupError = struct
-      module Type = struct
-        type t =
-          | Template_not_found of string
-          | Restricted_content
-          | Path of LookupError.Type.t
-          | Unsupported_folder
-          | Property_field_too_large
-          | Does_not_fit_template
-          | Duplicate_property_groups
-        [@@deriving dropbox, show]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
     module RemovePropertiesArg = struct
       module Type = struct
         type t =
@@ -90,33 +74,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           | Lookup_error of LookupError.Type.t
           | Unsupported_folder
           | Property_group_lookup of LookUpPropertiesError.Type.t
-        [@@deriving dropbox, show]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module LogicalOperator = struct
-      module Type = struct
-        type t = Or_operator [@@deriving dropbox, show]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module PropertiesSearchMode = struct
-      module Type = struct
-        type t = Field_name of string [@@deriving dropbox, show]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module TemplateFilter = struct
-      module Type = struct
-        type t =
-          | Filter_some of string list
-          | Filter_none
         [@@deriving dropbox, show]
       end
 
@@ -285,17 +242,6 @@ module Make (C : Cohttp_lwt.S.Client) = struct
           ; description : string
           ; fields : PropertyFieldTemplate.Type.t list }
         [@@deriving yojson, show]
-      end
-
-      module Json = Json.Make (Type)
-    end
-
-    module TemplateError = struct
-      module Type = struct
-        type t =
-          | Template_not_found of string
-          | Restricted_content
-        [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
