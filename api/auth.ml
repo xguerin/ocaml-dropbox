@@ -8,7 +8,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Protocol = struct
-    module Result = struct
+    module TokenResult = struct
       module Type = struct
         type t =
           { access_token : string
@@ -58,7 +58,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
    *)
 
   module Token = struct
-    module Result = Protocol.Result
+    module Result = Protocol.TokenResult
     module Error = Error.Make (Error.Void)
 
     module Info = struct
@@ -78,7 +78,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       match redirect_uri with
       | None -> q
       | Some u -> ("redirect_uri", [Uri.to_string u]) :: q in
-    let get_info Protocol.Result.Type.{access_token; _} =
+    let get_info Token.Result.Type.{access_token; _} =
       Lwt.return_ok @@ access_token in
     Token.Fn.call ~q () >>=? get_info
 

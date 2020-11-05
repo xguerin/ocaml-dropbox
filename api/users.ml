@@ -252,7 +252,7 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.Make (Type)
     end
 
-    module UserFeatureBatchArg = struct
+    module UserFeaturesGetValuesBatchArg = struct
       module Type = struct
         type t = {features : UserFeature.Type.t list} [@@deriving yojson, show]
       end
@@ -271,6 +271,34 @@ module Make (C : Cohttp_lwt.S.Client) = struct
     module FileLockingAsValue = struct
       module Type = struct
         type t = Enabled of bool [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UserFeatureValue = struct
+      module Type = struct
+        type t =
+          | Paper_as_files of PaperAsFileValue.Type.t
+          | File_locking of FileLockingAsValue.Type.t
+        [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UserFeaturesGetValuesBatchResult = struct
+      module Type = struct
+        type t = {values : UserFeatureValue.Type.t list}
+        [@@deriving yojson, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UserFeaturesGetValuesBatchError = struct
+      module Type = struct
+        type t = Empty_features_list [@@deriving dropbox, show]
       end
 
       module Json = Json.Make (Type)
@@ -358,4 +386,20 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   (*
    * Features - Get value.
    *)
+
+  module FeaturesGetValues = struct
+    module Arg = Protocol.UserFeaturesGetValuesBatchArg
+    module Result = Protocol.UserFeaturesGetValuesBatchResult
+    module Error = Error.Make (Protocol.UserFeaturesGetValuesBatchError)
+
+    module Info = struct
+      let uri = Root.api "/users/features/get_values"
+    end
+
+    module Fn = Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let features_get_values ~session features =
+    let headers = Session.headers session in
+    FeaturesGetValues.Fn.call ~headers {features}
 end
