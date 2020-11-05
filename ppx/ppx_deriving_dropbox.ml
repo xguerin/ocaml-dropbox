@@ -45,6 +45,20 @@ module OfYojson = struct
       ; Exp.case
           [%pat? `String [%p pstr lc_name]]
           [%expr Ok [%e Exp.construct (lid txt) None]] ]
+    (* Variant constructor with a bool argument *)
+    | { pcd_name = {txt = name; _}
+      ; pcd_loc = loc
+      ; pcd_args =
+          Pcstr_tuple
+            [{ptyp_desc = Ptyp_constr ({txt = Lident "bool"; _}, []); _}]
+      ; _ } ->
+      let lc_name = String.lowercase_ascii name in
+      [ Exp.case
+          [%pat?
+            `Assoc
+              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
+              ; ([%p pstr lc_name], `Bool [%p pvar lc_name]) ]]
+          [%expr Ok [%e Exp.construct (lid name) (Some (evar lc_name))]] ]
     (* Variant constructor with a string argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -218,6 +232,12 @@ end
  *)
 
 module ToYojson = struct
+  let make_tagged_bool ~loc lc_name =
+    [%expr
+      `Assoc
+        [ ([%e str ".tag"], `String [%e str lc_name])
+        ; ([%e str lc_name], `Bool [%e evar lc_name]) ]]
+
   let make_tagged_string ~loc lc_name =
     [%expr
       `Assoc
@@ -254,6 +274,17 @@ module ToYojson = struct
       [ Exp.case
           (Pat.construct (lid txt) None)
           (Exp.variant "String" (Some (str lc_name))) ]
+    (* Variant constructor with a bool argument *)
+    | { pcd_name = {txt = name; _}
+      ; pcd_loc = loc
+      ; pcd_args =
+          Pcstr_tuple
+            [{ptyp_desc = Ptyp_constr ({txt = Lident "bool"; _}, []); _}]
+      ; _ } ->
+      let lc_name = String.lowercase_ascii name in
+      [ Exp.case
+          (Pat.construct (lid name) (Some (pvar lc_name)))
+          (make_tagged_bool ~loc lc_name) ]
     (* Variant constructor with a string argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
