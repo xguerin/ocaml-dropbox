@@ -21,6 +21,63 @@ module Make (C : Cohttp_lwt.S.Client) = struct
       module Json = Json.Make (Type)
     end
 
+    module GetAccountArg = struct
+      module Type = struct
+        type t = {account_id : string} [@@deriving yojson, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module BasicAccount = struct
+      module Type = struct
+        type t =
+          { account_id : string
+          ; name : Name.Type.t
+          ; email : string
+          ; email_verified : bool
+          ; disabled : bool
+          ; is_teammate : bool
+          ; profile_photo_url : string option
+          ; team_member_id : string option }
+        [@@deriving yojson, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module GetAccountError = struct
+      module Type = struct
+        type t = No_account [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module GetAccountBatchArg = struct
+      module Type = struct
+        type t = {account_ids : string list} [@@deriving yojson, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module GetAccountBatchResult = struct
+      module Type = struct
+        type t = BasicAccount.Type.t list [@@deriving yojson, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module GetAccountBatchError = struct
+      module Type = struct
+        type t = No_account of string [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
     module SharedFolderMemberPolicy = struct
       module Type = struct
         type t =
@@ -183,27 +240,82 @@ module Make (C : Cohttp_lwt.S.Client) = struct
 
       module Json = Json.Make (Type)
     end
+
+    module UserFeature = struct
+      module Type = struct
+        type t =
+          | Paper_as_files
+          | File_locking
+        [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module UserFeatureBatchArg = struct
+      module Type = struct
+        type t = {features : UserFeature.Type.t list} [@@deriving yojson, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module PaperAsFileValue = struct
+      module Type = struct
+        type t = Enabled of bool [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
+
+    module FileLockingAsValue = struct
+      module Type = struct
+        type t = Enabled of bool [@@deriving dropbox, show]
+      end
+
+      module Json = Json.Make (Type)
+    end
   end
 
   (*
    * Get account.
    *)
 
-  let get_account_uri = Root.api "/users/get_account"
+  module GetAccount = struct
+    module Arg = Protocol.GetAccountArg
+    module Result = Protocol.BasicAccount
+    module Error = Error.Make (Protocol.GetAccountError)
 
-  let get_account (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/users/get_account"
+    end
+
+    module Fn = Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_account ~session account_id =
+    let headers = Session.headers session in
+    GetAccount.Fn.call ~headers {account_id}
 
   (*
    * Get account batch.
    *)
 
-  let get_account_batch_uri = Root.api "/users/get_account_batch"
+  module GetAccountBatch = struct
+    module Arg = Protocol.GetAccountBatchArg
+    module Result = Protocol.GetAccountBatchResult
+    module Error = Error.Make (Protocol.GetAccountBatchError)
 
-  let get_account_batch (_ : Session.Type.t) =
-    let module Error = Error.Make (Error.Void) in
-    Lwt.return_error Error.Not_implemented
+    module Info = struct
+      let uri = Root.api "/users/get_account_batch"
+    end
+
+    module Fn = Function (C) (Arg) (Result) (Error) (Info)
+  end
+
+  let get_account_batch ~session account_ids =
+    let headers = Session.headers session in
+    GetAccountBatch.Fn.call ~headers {account_ids}
 
   (*
    * Get current account.
@@ -242,4 +354,8 @@ module Make (C : Cohttp_lwt.S.Client) = struct
   let get_space_usage ~session () =
     let headers = Session.headers session in
     GetSpaceUsage.Fn.call ~headers ()
+
+  (*
+   * Features - Get value.
+   *)
 end
