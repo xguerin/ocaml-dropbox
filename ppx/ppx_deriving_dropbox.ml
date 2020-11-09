@@ -1,5 +1,6 @@
+open Ppxlib
 open Ast_helper
-open Ast_convenience
+open Ast_builder.Default
 open Parsetree
 
 (*
@@ -40,11 +41,13 @@ module OfYojson = struct
     | {pcd_name = {txt; _}; pcd_loc = loc; pcd_args = Pcstr_tuple []; _} ->
       let lc_name = String.lowercase_ascii txt in
       [ Exp.case
-          [%pat? `Assoc [([%p pstr ".tag"], `String [%p pstr lc_name])]]
-          [%expr Ok [%e Exp.construct (lid txt) None]]
+          [%pat?
+            `Assoc
+              [([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])]]
+          [%expr Ok [%e Exp.construct (Located.lident ~loc txt) None]]
       ; Exp.case
-          [%pat? `String [%p pstr lc_name]]
-          [%expr Ok [%e Exp.construct (lid txt) None]] ]
+          [%pat? `String [%p pstring ~loc lc_name]]
+          [%expr Ok [%e Exp.construct (Located.lident ~loc txt) None]] ]
     (* Variant constructor with a bool argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -56,9 +59,13 @@ module OfYojson = struct
       [ Exp.case
           [%pat?
             `Assoc
-              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
-              ; ([%p pstr lc_name], `Bool [%p pvar lc_name]) ]]
-          [%expr Ok [%e Exp.construct (lid name) (Some (evar lc_name))]] ]
+              [ ([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              ; ([%p pstring ~loc lc_name], `Bool [%p pvar ~loc lc_name]) ]]
+          [%expr
+            Ok
+              [%e
+                Exp.construct (Located.lident ~loc name)
+                  (Some (evar ~loc lc_name))]] ]
     (* Variant constructor with a string argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -70,9 +77,13 @@ module OfYojson = struct
       [ Exp.case
           [%pat?
             `Assoc
-              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
-              ; ([%p pstr lc_name], `String [%p pvar lc_name]) ]]
-          [%expr Ok [%e Exp.construct (lid name) (Some (evar lc_name))]] ]
+              [ ([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              ; ([%p pstring ~loc lc_name], `String [%p pvar ~loc lc_name]) ]]
+          [%expr
+            Ok
+              [%e
+                Exp.construct (Located.lident ~loc name)
+                  (Some (evar ~loc lc_name))]] ]
     (* Variant constructor with a string option argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -88,22 +99,27 @@ module OfYojson = struct
       ; _ } ->
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          [%pat? `Assoc [([%p pstr ".tag"], `String [%p pstr lc_name])]]
+          [%pat?
+            `Assoc
+              [([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])]]
           [%expr
             Ok
               [%e
-                Exp.construct (lid name)
-                  (Some (Exp.construct (lid "None") None))]]
+                Exp.construct (Located.lident ~loc name)
+                  (Some (Exp.construct (Located.lident ~loc "None") None))]]
       ; Exp.case
           [%pat?
             `Assoc
-              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
-              ; ([%p pstr lc_name], `String [%p pvar lc_name]) ]]
+              [ ([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              ; ([%p pstring ~loc lc_name], `String [%p pvar ~loc lc_name]) ]]
           [%expr
             Ok
               [%e
-                Exp.construct (lid name)
-                  (Some (Exp.construct (lid "Some") (Some (evar lc_name))))]] ]
+                Exp.construct (Located.lident ~loc name)
+                  (Some
+                     (Exp.construct
+                        (Located.lident ~loc "Some")
+                        (Some (evar ~loc lc_name))))]] ]
     (* Variant constructor with a string list argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -121,14 +137,17 @@ module OfYojson = struct
       [ Exp.case
           [%pat?
             `Assoc
-              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
-              ; ([%p pstr lc_name], `List [%p pvar lc_name]) ]]
+              [ ([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              ; ([%p pstring ~loc lc_name], `List [%p pvar ~loc lc_name]) ]]
           [%expr
             let result =
               List.fold_right
                 (fun e acc -> match e with `String v -> v :: acc | _ -> acc)
-                [%e evar lc_name] [] in
-            Ok [%e Exp.construct (lid name) (Some (evar "result"))]] ]
+                [%e evar ~loc lc_name] [] in
+            Ok
+              [%e
+                Exp.construct (Located.lident ~loc name)
+                  (Some (evar ~loc "result"))]] ]
     (* Variant constructor with a Type.t argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -141,11 +160,15 @@ module OfYojson = struct
       [ Exp.case
           [%pat?
             `Assoc
-              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
-              ; ([%p pstr lc_name], [%p pvar lc_name]) ]]
+              [ ([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              ; ([%p pstring ~loc lc_name], [%p pvar ~loc lc_name]) ]]
           [%expr
-            match [%e Exp.apply of_yojson [(Nolabel, evar lc_name)]] with
-            | Ok v -> Ok [%e Exp.construct (lid name) (Some (evar "v"))]
+            match [%e Exp.apply of_yojson [(Nolabel, evar ~loc lc_name)]] with
+            | Ok v ->
+              Ok
+                [%e
+                  Exp.construct (Located.lident ~loc name)
+                    (Some (evar ~loc "v"))]
             | Error _ as e -> e] ]
     (* Variant constructor with a Type.t option argument *)
     | { pcd_name = {txt = name; _}
@@ -162,24 +185,29 @@ module OfYojson = struct
       let of_yojson = Exp.ident {txt = Ldot (base, "of_yojson"); loc} in
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          [%pat? `Assoc [([%p pstr ".tag"], `String [%p pstr lc_name])]]
+          [%pat?
+            `Assoc
+              [([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])]]
           [%expr
             Ok
               [%e
-                Exp.construct (lid name)
-                  (Some (Exp.construct (lid "None") None))]]
+                Exp.construct (Located.lident ~loc name)
+                  (Some (Exp.construct (Located.lident ~loc "None") None))]]
       ; Exp.case
           [%pat?
             `Assoc
-              [ ([%p pstr ".tag"], `String [%p pstr lc_name])
-              ; ([%p pstr lc_name], [%p pvar lc_name]) ]]
+              [ ([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              ; ([%p pstring ~loc lc_name], [%p pvar ~loc lc_name]) ]]
           [%expr
-            match [%e Exp.apply of_yojson [(Nolabel, evar lc_name)]] with
+            match [%e Exp.apply of_yojson [(Nolabel, evar ~loc lc_name)]] with
             | Ok v ->
               Ok
                 [%e
-                  Exp.construct (lid name)
-                    (Some (Exp.construct (lid "Some") (Some (evar "v"))))]
+                  Exp.construct (Located.lident ~loc name)
+                    (Some
+                       (Exp.construct
+                          (Located.lident ~loc "Some")
+                          (Some (evar ~loc "v"))))]
             | Error _ as e -> e] ]
     (* Error *)
     | {pcd_name = {loc; _}; _} ->
@@ -195,19 +223,26 @@ module OfYojson = struct
       let of_yojson = Exp.ident {txt = Ldot (base, "of_yojson"); loc} in
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          [%pat? `Assoc (([%p pstr ".tag"], `String [%p pstr lc_name]) :: tl)]
+          [%pat?
+            `Assoc
+              (([%p pstring ~loc ".tag"], `String [%p pstring ~loc lc_name])
+              :: tl)]
           [%expr
             match
               [%e
                 Exp.apply of_yojson
-                  [(Nolabel, Exp.variant "Assoc" (Some (evar "tl")))]]
+                  [(Nolabel, Exp.variant "Assoc" (Some (evar ~loc "tl")))]]
             with
-            | Ok v -> Ok [%e Exp.construct (lid name) (Some (evar "v"))]
+            | Ok v ->
+              Ok
+                [%e
+                  Exp.construct (Located.lident ~loc name)
+                    (Some (evar ~loc "v"))]
             | Error _ as e -> e] ]
     | {pcd_loc = loc; _} -> raise ~loc "[dropbox] invalid Subtype constructor"
 
   let default_case ~loc () =
-    [Exp.case [%pat? _] [%expr Error [%e str "invalid format"]]]
+    [Exp.case [%pat? _] [%expr Error [%e estring ~loc "invalid format"]]]
 
   let convert_variant_to_case ~options variant =
     match options.Options.mode with
@@ -217,7 +252,7 @@ module OfYojson = struct
   let convert_variants_to_match ~options ~loc variants =
     let cases = List.map (convert_variant_to_case ~options) variants in
     let default = default_case ~loc () in
-    Exp.match_ (evar "w") (List.concat cases @ default)
+    Exp.match_ (evar ~loc "w") (List.concat cases @ default)
 
   let gen ~options ~loc variants =
     let match_ = convert_variants_to_match ~options ~loc variants in
@@ -235,45 +270,51 @@ module ToYojson = struct
   let make_tagged_bool ~loc lc_name =
     [%expr
       `Assoc
-        [ ([%e str ".tag"], `String [%e str lc_name])
-        ; ([%e str lc_name], `Bool [%e evar lc_name]) ]]
+        [ ([%e estring ~loc ".tag"], `String [%e estring ~loc lc_name])
+        ; ([%e estring ~loc lc_name], `Bool [%e evar ~loc lc_name]) ]]
 
   let make_tagged_string ~loc lc_name =
     [%expr
       `Assoc
-        [ ([%e str ".tag"], `String [%e str lc_name])
-        ; ([%e str lc_name], `String [%e evar lc_name]) ]]
+        [ ([%e estring ~loc ".tag"], `String [%e estring ~loc lc_name])
+        ; ([%e estring ~loc lc_name], `String [%e evar ~loc lc_name]) ]]
 
   let make_tagged_string_none ~loc lc_name =
-    [%expr `Assoc [([%e str ".tag"], `String [%e str lc_name])]]
+    [%expr
+      `Assoc [([%e estring ~loc ".tag"], `String [%e estring ~loc lc_name])]]
 
   let make_tagged_string_list ~loc lc_name =
     [%expr
       `Assoc
-        [ ([%e str ".tag"], `String [%e str lc_name])
-        ; ( [%e str lc_name]
-          , `List (List.map (fun e -> `String e) [%e evar lc_name]) ) ]]
+        [ ([%e estring ~loc ".tag"], `String [%e estring ~loc lc_name])
+        ; ( [%e estring ~loc lc_name]
+          , `List (List.map (fun e -> `String e) [%e evar ~loc lc_name]) ) ]]
 
   let make_yojson_as_union ~loc to_yojson lc_name =
     [%expr
       `Assoc
-        [ ([%e str ".tag"], `String [%e str lc_name])
-        ; ( [%e str lc_name]
-          , [%e Exp.apply to_yojson [(Asttypes.Nolabel, evar lc_name)]] ) ]]
+        [ ([%e estring ~loc ".tag"], `String [%e estring ~loc lc_name])
+        ; ( [%e estring ~loc lc_name]
+          , [%e Exp.apply to_yojson [(Asttypes.Nolabel, evar ~loc lc_name)]] )
+        ]]
 
   let make_yojson_as_subtype ~loc to_yojson lc_name =
     [%expr
-      match [%e Exp.apply to_yojson [(Asttypes.Nolabel, evar lc_name)]] with
-      | `Assoc tl -> `Assoc (([%e str ".tag"], `String [%e str lc_name]) :: tl)
+      match
+        [%e Exp.apply to_yojson [(Asttypes.Nolabel, evar ~loc lc_name)]]
+      with
+      | `Assoc tl ->
+        `Assoc
+          (([%e estring ~loc ".tag"], `String [%e estring ~loc lc_name]) :: tl)
       | _ -> `Null]
 
   let convert_variant_to_case_as_union = function
     (* Variant constructor without argument *)
-    | {pcd_name = {txt; _}; pcd_args = Pcstr_tuple []; _} ->
+    | {pcd_name = {txt; _}; pcd_loc = loc; pcd_args = Pcstr_tuple []; _} ->
       let lc_name = String.lowercase_ascii txt in
       [ Exp.case
-          (Pat.construct (lid txt) None)
-          (Exp.variant "String" (Some (str lc_name))) ]
+          (Pat.construct (Located.lident ~loc txt) None)
+          (Exp.variant "String" (Some (estring ~loc lc_name))) ]
     (* Variant constructor with a bool argument *)
     | { pcd_name = {txt = name; _}
       ; pcd_loc = loc
@@ -283,7 +324,7 @@ module ToYojson = struct
       ; _ } ->
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name) (Some (pvar lc_name)))
+          (Pat.construct (Located.lident ~loc name) (Some (pvar ~loc lc_name)))
           (make_tagged_bool ~loc lc_name) ]
     (* Variant constructor with a string argument *)
     | { pcd_name = {txt = name; _}
@@ -294,7 +335,7 @@ module ToYojson = struct
       ; _ } ->
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name) (Some (pvar lc_name)))
+          (Pat.construct (Located.lident ~loc name) (Some (pvar ~loc lc_name)))
           (make_tagged_string ~loc lc_name) ]
     (* Variant constructor with a string option argument *)
     | { pcd_name = {txt = name; _}
@@ -311,11 +352,15 @@ module ToYojson = struct
       ; _ } ->
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name)
-             (Some (Pat.construct (lid "Some") (Some (pvar lc_name)))))
+          (Pat.construct (Located.lident ~loc name)
+             (Some
+                (Pat.construct
+                   (Located.lident ~loc "Some")
+                   (Some (pvar ~loc lc_name)))))
           (make_tagged_string ~loc lc_name)
       ; Exp.case
-          (Pat.construct (lid name) (Some (Pat.construct (lid "None") None)))
+          (Pat.construct (Located.lident ~loc name)
+             (Some (Pat.construct (Located.lident ~loc "None") None)))
           (make_tagged_string_none ~loc lc_name) ]
     (* Variant constructor with a string list argument *)
     | { pcd_name = {txt = name; _}
@@ -332,7 +377,7 @@ module ToYojson = struct
       ; _ } ->
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name) (Some (pvar lc_name)))
+          (Pat.construct (Located.lident ~loc name) (Some (pvar ~loc lc_name)))
           (make_tagged_string_list ~loc lc_name) ]
     (* Variant constructor with a Type.t argument *)
     | { pcd_name = {txt = name; _}
@@ -344,7 +389,7 @@ module ToYojson = struct
       let to_yojson = Exp.ident {txt = Ldot (base, "to_yojson"); loc} in
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name) (Some (pvar lc_name)))
+          (Pat.construct (Located.lident ~loc name) (Some (pvar ~loc lc_name)))
           (make_yojson_as_union ~loc to_yojson lc_name) ]
     (* Variant constructor with a Type.t option argument *)
     | { pcd_name = {txt = name; _}
@@ -361,11 +406,15 @@ module ToYojson = struct
       let to_yojson = Exp.ident {txt = Ldot (base, "to_yojson"); loc} in
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name)
-             (Some (Pat.construct (lid "Some") (Some (pvar lc_name)))))
+          (Pat.construct (Located.lident ~loc name)
+             (Some
+                (Pat.construct
+                   (Located.lident ~loc "Some")
+                   (Some (pvar ~loc lc_name)))))
           (make_yojson_as_union ~loc to_yojson lc_name)
       ; Exp.case
-          (Pat.construct (lid name) (Some (Pat.construct (lid "None") None)))
+          (Pat.construct (Located.lident ~loc name)
+             (Some (Pat.construct (Located.lident ~loc "None") None)))
           (make_tagged_string_none ~loc lc_name) ]
     | {pcd_name = {loc; _}; _} ->
       raise ~loc "[dropbox] invalid Union constructor"
@@ -380,7 +429,7 @@ module ToYojson = struct
       let to_yojson = Exp.ident {txt = Ldot (base, "to_yojson"); loc} in
       let lc_name = String.lowercase_ascii name in
       [ Exp.case
-          (Pat.construct (lid name) (Some (pvar lc_name)))
+          (Pat.construct (Located.lident ~loc name) (Some (pvar ~loc lc_name)))
           (make_yojson_as_subtype ~loc to_yojson lc_name) ]
     | {pcd_loc = loc; _} -> raise ~loc "[dropbox] invalid Subtype constructor"
 
@@ -389,12 +438,12 @@ module ToYojson = struct
     | Union -> convert_variant_to_case_as_union variant
     | SubType -> convert_variant_to_case_as_subtype variant
 
-  let convert_variants_to_match ~options variants =
+  let convert_variants_to_match ~options ~loc variants =
     let cases = List.map (convert_variant_to_case ~options) variants in
-    Exp.match_ (evar "v") (List.concat cases)
+    Exp.match_ (evar ~loc "v") (List.concat cases)
 
   let gen ~options ~loc variants =
-    let match_ = convert_variants_to_match ~options variants in
+    let match_ = convert_variants_to_match ~options ~loc variants in
     [%expr fun v -> [%e match_]]
 end
 
@@ -408,8 +457,8 @@ let str_of_type ~options ~path:_ ({ptype_loc = loc; _} as type_decl) =
   | Ptype_variant constrs ->
     let of_yojson = OfYojson.gen ~options ~loc constrs
     and to_yojson = ToYojson.gen ~options ~loc constrs in
-    [ Str.value Nonrecursive [Vb.mk (pvar "of_yojson") of_yojson]
-    ; Str.value Nonrecursive [Vb.mk (pvar "to_yojson") to_yojson] ]
+    [ Str.value Nonrecursive [Vb.mk (pvar ~loc "of_yojson") of_yojson]
+    ; Str.value Nonrecursive [Vb.mk (pvar ~loc "to_yojson") to_yojson] ]
   | _ -> raise ~loc "[dropbox] only supports Variant types"
 
 let type_decl_str ~options ~path type_decls =
