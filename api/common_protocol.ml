@@ -612,10 +612,24 @@ module HighlightSpan = struct
   module Json = Json.Make (Type)
 end
 
+module SearchMatchTypeV2 = struct
+  module Type = struct
+    type t =
+      | Filename
+      | File_content
+      | Filename_and_content
+      | Image_content
+    [@@deriving dropbox, show]
+  end
+
+  module Json = Json.Make (Type)
+end
+
 module SearchMatchV2 = struct
   module Type = struct
     type t =
       { metadata : MetadataV2.Type.t
+      ; match_type : SearchMatchTypeV2.Type.t option [@default None]
       ; highlight_spans : HighlightSpan.Type.t list option [@default None] }
     [@@deriving yojson, show]
   end
