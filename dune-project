@@ -1,7 +1,7 @@
 (lang dune 2.5.1)
 
 (name ocaml-dropbox)
-(version 1.0.0)
+(version 0.1.0)
 (generate_opam_files true)
 
 (source (github xguerin/ocaml-dropbox))
@@ -31,5 +31,5 @@
  (depends
   (cohttp-lwt-unix (>= 2.5.1))
   (dune (and :build (> 2.0)))
-  (ocaml-dropbox (>= 1.0.0))
+  (ocaml-dropbox (>= 0.1.0))
 ))

@@ -1,5 +1,10 @@
 # Dropbox v2 API client for OCaml
 
+## Coverage
+
+The current implementation is partial. The completion of the full API is a work
+in progress. Pull requests are welcome.
+
 ## Preprocessor extension for the Dropbox JSON serializer
 
 The documentation
