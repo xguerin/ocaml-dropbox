@@ -69,10 +69,12 @@ module Make (E : Endpoint) : T with type error = E.Type.t = struct
     ; user_message : (string option[@default None]) }
   [@@deriving of_yojson, show]
 
+  let str v fmt () = Format.fprintf fmt v
+
   type t =
     | Access_denied
     | Bad_input_parameter of string
-    | Bad_or_expired_token
+    | Bad_or_expired_token [@printer str "Bad or expired token"]
     | Endpoint of endpoint
     | Missing_header
     | Not_implemented
